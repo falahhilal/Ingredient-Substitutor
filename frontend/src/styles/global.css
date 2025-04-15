@@ -16,4 +16,7 @@ body {
     filter: blur(2px);
     z-index: -1;
   }
-  
+
+  html, body {
+    height: 100%;
+  }  

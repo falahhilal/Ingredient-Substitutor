@@ -1,47 +1,72 @@
-'use client';
+"use client"
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
-  const router = useRouter();
-
-  // Function to navigate to login page
-  const goToLogin = () => {
-    router.push('/login');
-  };
-
-  // Function to navigate to signup page
-  const goToSignup = () => {
-    router.push('/signup');
-  };
+  const router = useRouter()
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        color: '#fff',
-      }}
-    >
-      <h1>Welcome to My App</h1>
-      <div>
-        <button onClick={goToLogin} style={buttonStyle}>Login</button>
-        <button onClick={goToSignup} style={buttonStyle}>Signup</button>
+    <div style={{ height: "100vh", width: "100vw", position: "relative", overflow: "hidden" }}>
+      <h1
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "20px",
+          fontSize: "4rem",
+          fontWeight: "bold",
+          color: "#4b8a3f",
+          margin: 0,
+          padding: 0,
+        }}
+      >
+        INGREDIENT SUBSTITUTOR
+      </h1>
+
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          width: "250px",
+        }}
+      >
+        <button
+          onClick={() => router.push("/login")}
+          style={{
+            padding: "16px 32px",
+            fontSize: "20px",
+            fontWeight: "600",
+            backgroundColor: "#a2a2a2",
+            border: "1px solid #ccc",
+            borderRadius: "15px",
+            cursor: "pointer",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          Login
+        </button>
+
+        <button
+          onClick={() => router.push("/signup")}
+          style={{
+            padding: "16px 32px",
+            fontSize: "20px",
+            fontWeight: "600",
+            backgroundColor: "#a2a2a2",
+            border: "1px solid #ccc",
+            borderRadius: "15px",
+            cursor: "pointer",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          Signup
+        </button>
+
       </div>
     </div>
-  );
+  )
 }
-
-const buttonStyle = {
-  padding: '10px 20px',
-  margin: '10px',
-  fontSize: '16px',
-  cursor: 'pointer',
-};
-
