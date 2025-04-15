@@ -6,7 +6,7 @@ const formContainerStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   height: '100vh',
-  color: '#fff',
+  color: '#000',
 };
 
 const buttonStyle: React.CSSProperties = {

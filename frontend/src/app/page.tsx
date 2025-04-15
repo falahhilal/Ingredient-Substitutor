@@ -26,7 +26,7 @@ export default function HomePage() {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        color: '#fff',
+        color: '#000',
       }}
     >
       <h1>Welcome to My App</h1>
