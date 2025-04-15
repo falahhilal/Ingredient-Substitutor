@@ -1,6 +1,7 @@
 'use client';  
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const formContainerStyle: React.CSSProperties = {
   display: 'flex',
@@ -54,6 +55,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const router = useRouter();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -63,6 +66,8 @@ export default function LoginPage() {
     setError('');
     const loginData = { email, password };
     console.log('Login data:', loginData);
+
+    router.push('/dashboard');
   };
 
   return (
