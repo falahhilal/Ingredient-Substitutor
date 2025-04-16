@@ -1,16 +1,21 @@
 'use client';
 
 import React from 'react';
-import Navbar from '../../components/navbar'; 
 
 export default function DashboardPage() {
-    return (
-      <div>
-        <Navbar />
-        <div style={{ padding: '20px' }}>
-          <h1>Dashboard</h1>
-        </div>
-      </div>
-    );
-  }
-  
+  const username = 'Mahrukh';
+
+  return (
+    <div
+      style={{
+        paddingTop: '80px',
+        paddingLeft: '20px',
+        color: '#4f4f4f', 
+      }}
+    >
+      <h1 style={{ fontSize: '36px', fontWeight: 'bold' }}>
+        Hi {username}!
+      </h1>
+    </div>
+  );
+}

@@ -1,16 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import Sidebar from './sidebar';
+import React from 'react';
+
+interface NavbarProps {
+  onHamburgerClick: () => void;
+}
 
 const navbarStyle: React.CSSProperties = {
   width: '100%',
   height: '60px',
-  backgroundColor: '#c9edb6',
+  backgroundColor: '#6e6e6e',
   display: 'flex',
   alignItems: 'center',
   padding: '0 20px',
   boxSizing: 'border-box',
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  zIndex: 1000,
 };
 
 const hamburgerStyle: React.CSSProperties = {
@@ -29,22 +36,16 @@ const lineStyle: React.CSSProperties = {
   borderRadius: '2px',
 };
 
-export default function Navbar() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
+const Navbar: React.FC<NavbarProps> = ({ onHamburgerClick }) => {
   return (
     <div style={navbarStyle}>
-      <div onClick={toggleSidebar} style={hamburgerStyle}>
+      <div style={hamburgerStyle} onClick={onHamburgerClick}>
         <div style={lineStyle}></div>
         <div style={lineStyle}></div>
         <div style={lineStyle}></div>
       </div>
-
-      <Sidebar isOpen={sidebarOpen} />
     </div>
   );
-}
+};
+
+export default Navbar;
