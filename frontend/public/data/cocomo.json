@@ -1,10 +1,12 @@
 {
-    "sugar": 8,
-    "fat": 9,
-    "sodium": 160,
-    "protein": 1,
-    "vegan": false,
-    "halal": true,
-    "containsLactose": true
-  }
-  
+  "sugar": 10,
+  "fat": 8,
+  "sodium": 160,
+  "protein": 4,
+  "calories": 200,
+  "vegan": true,
+  "halal": true,
+  "containsLactose": false,
+  "ingredients": "Sugar, Cocoa, Palm Oil, Soy Lecithin",
+  "claims": "Low Fat, Sugar-Free"
+}

@@ -13,7 +13,7 @@ const containerStyle: React.CSSProperties = {
   padding: '30px',
   borderRadius: '15px',
   width: '350px',
-  margin: '80px auto 0', // ensures it’s not under navbar
+  margin: '80px auto 0',
 };
 
 const inputStyle: React.CSSProperties = {
@@ -51,6 +51,9 @@ const productOptions = [
 export default function AnalyzeProductPage() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [result, setResult] = useState<any>(null);
+  const [mlResult, setMLResult] = useState<any>(null);
+  const [mlAnalysis, setMlAnalysis] = useState<any>(null);
+
   const [preferences, setPreferences] = useState({
     diabetic: false,
     vegan: false,
@@ -83,8 +86,13 @@ export default function AnalyzeProductPage() {
       const res = await fetch(`/data/${selectedProduct}.json`);
       const data = await res.json();
       setResult(data);
+  
+      const mlRes = await fetch('/data/ml_analysis.json'); 
+      const mlData = await mlRes.json();
+      setMlAnalysis(mlData);
+  
     } catch (error) {
-      console.error('Error fetching product data:', error);
+      console.error('Error fetching product or ML data:', error);
     }
   };
 
@@ -118,12 +126,11 @@ export default function AnalyzeProductPage() {
           <p>Protein: {result.protein}g</p>
 
           <h4>Dietary Preference Verdict:</h4>
-          {/* Diabetic preference */}
+
           {preferences.diabetic && result.sugar > 5 && (
             <p>⚠️ Not suitable for diabetics (high sugar)</p>
           )}
 
-          {/* Low Sodium preference */}
           {preferences.lowSodium && result.sodium > 150 && (
             <p>⚠️ Not suitable for low-sodium diets</p>
           )}
@@ -131,7 +138,6 @@ export default function AnalyzeProductPage() {
             <p>✅ Low in sodium (suitable for low-sodium diets)</p>
           )}
 
-          {/* Vegan preference */}
           {preferences.vegan && !result.vegan && (
             <p>⚠️ Not suitable for vegans</p>
           )}
@@ -139,7 +145,6 @@ export default function AnalyzeProductPage() {
             <p>✅ Suitable for vegans</p>
           )}
 
-          {/* Halal preference */}
           {preferences.halal && !result.halal && (
             <p>⚠️ Not Halal</p>
           )}
@@ -147,15 +152,13 @@ export default function AnalyzeProductPage() {
             <p>✅ Halal certified</p>
           )}
 
-          {/* Lactose Intolerant preference */}
           {preferences.lactoseIntolerant && result.containsLactose && (
             <p>⚠️ Contains lactose (not suitable for lactose intolerant)</p>
           )}
           {preferences.lactoseIntolerant && !result.containsLactose && (
             <p>✅ Lactose free (suitable for lactose intolerant)</p>
           )}
-
-          {/* Low Fat preference */}
+          
           {preferences.lowFat && result.fat > 5 && (
             <p>⚠️ Not suitable for low-fat diets</p>
           )}
@@ -163,7 +166,6 @@ export default function AnalyzeProductPage() {
             <p>✅ Low in fat (suitable for low-fat diets)</p>
           )}
 
-          {/* High Protein preference */}
           {preferences.highProtein && result.protein < 5 && (
             <p>⚠️ Not a good source of protein</p>
           )}
@@ -176,6 +178,15 @@ export default function AnalyzeProductPage() {
           <p>{result.fat > 10 ? '⚠️ High in fat' : '✅ Fat level is acceptable'}</p>
           <p>{result.sodium > 150 ? '⚠️ High sodium content' : '✅ Sodium level is safe'}</p>
           <p>{result.protein >= 5 ? '✅ Good protein source' : '⚠️ Low in protein'}</p>
+
+          {mlResult && (
+            <div style={{ marginTop: '20px' }}>
+              <h4>⚙️ ML Model Analysis:</h4>
+              <p><strong>Additive Risk:</strong> {mlResult.additiveRisk} ({mlResult.additiveScore}%)</p>
+              <p><strong>Processing Level:</strong> {mlResult.processingLevel} ({mlResult.processingScore}%)</p>
+              <p><strong>Claim Accuracy:</strong> {mlResult.claimAccuracy} ({mlResult.claimScore}%)</p>
+            </div>
+          )}
         </div>
       )}
     </div>
