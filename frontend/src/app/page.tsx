@@ -19,8 +19,7 @@ export default function HomePage() {
           padding: 0,
         }}
       >
-        INGREDIENT SUBSTITUTOR
-      </h1>
+        Product Analyzer      </h1>
 
       <div
         style={{

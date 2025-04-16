@@ -1,0 +1,10 @@
+{
+    "sugar": 5,
+    "fat": 2,
+    "sodium": 100,
+    "protein": 6,
+    "vegan": false,
+    "halal": true,
+    "containsLactose": true
+  }
+  

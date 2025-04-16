@@ -12,7 +12,7 @@ const navbarStyle: React.CSSProperties = {
   backgroundColor: '#6e6e6e',
   display: 'flex',
   alignItems: 'center',
-  padding: '0 20px',
+  padding: '10px 20px',
   boxSizing: 'border-box',
   position: 'fixed',
   top: 0,
