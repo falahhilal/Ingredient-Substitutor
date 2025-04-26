@@ -1,17 +1,78 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
-  // Placeholder user data 
   const user = {
     email: 'Mahrukh@123',
     username: 'MS',
   };
 
+  const [preferences, setPreferences] = useState<{ type: string; value: string }[]>([]);
+  const [showPreferenceOptions, setShowPreferenceOptions] = useState(false);
+  const [selectedPreferenceType, setSelectedPreferenceType] = useState<string | null>(null);
+  const [selectedNutrients, setSelectedNutrients] = useState<string[]>([]);
+
+  const nutrientOptions = [
+    "High Sodium", "Low Sodium",
+    "High Protein", "Low Protein",
+    "High Calories", "Low Calories",
+    "High Carbohydrates", "Low Carbohydrates",
+    "High Sugar", "Low Sugar",
+    "High in Fat", "Low in Fat"
+  ];
+
+  // Fetch saved preferences from localStorage when the page loads
+  useEffect(() => {
+    const storedPreferences = localStorage.getItem('userPreferences');
+    if (storedPreferences) {
+      setPreferences(JSON.parse(storedPreferences));
+    }
+  }, []);
+
+  // Save preferences to localStorage whenever the preferences state changes
+  useEffect(() => {
+    if (preferences.length > 0) {
+      localStorage.setItem('userPreferences', JSON.stringify(preferences));
+    }
+  }, [preferences]);
+
   const handleLogout = () => {
-    alert('Logging out...'); 
-    
+    alert('Logging out...');
+  };
+
+  const handleAddPreference = (value: string) => {
+    if (selectedPreferenceType) {
+      const newPreferences = [...preferences, { type: selectedPreferenceType, value }];
+      setPreferences(newPreferences);
+      setSelectedPreferenceType(null);
+      setShowPreferenceOptions(false);
+      setSelectedNutrients([]);
+    }
+  };
+
+  const handleSaveSelectedNutrients = () => {
+    const newPreferences = selectedNutrients.map((nutrient) => ({
+      type: 'Nutrient',
+      value: nutrient,
+    }));
+    setPreferences([...preferences, ...newPreferences]);
+    setSelectedNutrients([]);
+    setSelectedPreferenceType(null);
+    setShowPreferenceOptions(false);
+  };
+
+  const handleCheckboxChange = (option: string) => {
+    if (selectedNutrients.includes(option)) {
+      setSelectedNutrients(selectedNutrients.filter((item) => item !== option));
+    } else {
+      setSelectedNutrients([...selectedNutrients, option]);
+    }
+  };
+
+  const handleRemovePreference = (index: number) => {
+    const updatedPreferences = preferences.filter((_, i) => i !== index);
+    setPreferences(updatedPreferences);
   };
 
   return (
@@ -55,7 +116,7 @@ export default function SettingsPage() {
       <button
         style={{
           padding: '10px 20px',
-          backgroundColor: '#ff6b6b', //logout button
+          backgroundColor: '#ff6b6b',
           border: 'none',
           borderRadius: '6px',
           color: '#fff',
@@ -67,6 +128,146 @@ export default function SettingsPage() {
       >
         Logout
       </button>
+
+      {/* ADDING PREFERENCES SECTION */}
+      <div style={{ marginTop: '40px' }}>
+        <h2 style={{ fontSize: '22px', marginBottom: '20px' }}>Preferences</h2>
+
+        <button
+          onClick={() => setShowPreferenceOptions(!showPreferenceOptions)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#a2a2a2',
+            border: 'none',
+            borderRadius: '6px',
+            color: 'white',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            marginBottom: '20px',
+          }}
+        >
+          Add Preferences
+        </button>
+
+        {showPreferenceOptions && (
+          <div style={{ marginBottom: '20px' }}>
+            {!selectedPreferenceType ? (
+              <>
+                <button
+                  onClick={() => setSelectedPreferenceType('Allergy')}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#a2a2a2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginRight: '10px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  Add Allergy
+                </button>
+                <button
+                  onClick={() => setSelectedPreferenceType('Nutrient')}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#a2a2a2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginBottom: '10px',
+                  }}
+                >
+                  Add Nutrient Preference
+                </button>
+              </>
+            ) : selectedPreferenceType === 'Allergy' ? (
+              <div>
+                <input
+                  type="text"
+                  placeholder="Enter Allergy"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim() !== '') {
+                      handleAddPreference(e.currentTarget.value.trim());
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                  style={{
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #a2a2a2',
+                    marginBottom: '10px',
+                    width: '100%',
+                  }}
+                />
+              </div>
+            ) : (
+              <div>
+                {nutrientOptions.map((option) => (
+                  <label key={option} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedNutrients.includes(option)}
+                      onChange={() => handleCheckboxChange(option)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    {option}
+                  </label>
+                ))}
+                <button
+                  onClick={handleSaveSelectedNutrients}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#a2a2a2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginTop: '10px',
+                    width: '100%',
+                  }}
+                >
+                  Save Selected Preferences
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Display Preferences */}
+        {preferences.length > 0 && (
+          <div>
+            <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Your Preferences:</h3>
+            <ul>
+              {preferences.map((pref, index) => (
+                <li key={index} style={{ marginBottom: '8px' }}>
+                  <strong>{pref.type}:</strong> {pref.value}
+                  <button
+                    onClick={() => handleRemovePreference(index)}
+                    style={{
+                      marginLeft: '10px',
+                      backgroundColor: '#ff6b6b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '2px 8px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ❌
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

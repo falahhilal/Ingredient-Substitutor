@@ -1,21 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Checkbox } from "../../../components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "../../../components/ui/popover";
+
+// --- Added Interface ---
+interface DummyResult {
+  original: string;
+  costBased: string;
+  nutrientBased: { [key: string]: string };
+  allergenFree: { [key: string]: string };
+}
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<string[]>([]);
   const [results, setResults] = useState<string[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [savedPreferences, setSavedPreferences] = useState<{ type: string; value: string }[]>([]);
 
   const filterOptions = [
     { label: "Cost-based Alternatives", value: "costBased" },
     { label: "Nutrient-based Alternatives", value: "nutrientBased" },
     { label: "Allergen-free Alternatives", value: "allergenFree" },
+  ];
+
+  const dummyResults: DummyResult[] = [
+    {
+      original: "Sugar",
+      costBased: "Honey",
+      nutrientBased: {
+        "Low Sugar": "Stevia",
+        "Low Calories": "Erythritol",
+      },
+      allergenFree: {
+        "Lactose": "Maple Syrup",
+      }
+    },
+    {
+      original: "Butter",
+      costBased: "Margarine",
+      nutrientBased: {
+        "Low Fat": "Avocado Puree",
+      },
+      allergenFree: {
+        "Lactose": "Coconut Oil",
+      }
+    },
+    {
+      original: "Milk",
+      costBased: "Powdered Milk",
+      nutrientBased: {
+        "Low Fat": "Almond Milk",
+      },
+      allergenFree: {
+        "Lactose": "Oat Milk",
+      }
+    },
+    {
+      original: "Peanut Butter",
+      costBased: "Sunflower Seed Butter",
+      nutrientBased: {
+        "Low Fat": "Powdered Peanut Butter",
+      },
+      allergenFree: {
+        "Peanut": "Almond Butter",
+      }
+    },
   ];
 
   const handleFilterChange = (value: string) => {
@@ -30,27 +83,6 @@ export default function SearchPage() {
     console.log('Searching for:', searchQuery);
     console.log('With filters:', filters);
 
-    const dummyResults = [
-      {
-        original: "Sugar",
-        costBased: "Honey",
-        nutrientBased: "Stevia",
-        allergenFree: "Maple Syrup",
-      },
-      {
-        original: "Butter",
-        costBased: "Margarine",
-        nutrientBased: "Avocado Puree",
-        allergenFree: "Coconut Oil",
-      },
-      {
-        original: "Milk",
-        costBased: "Powdered Milk",
-        nutrientBased: "Almond Milk",
-        allergenFree: "Oat Milk",
-      },
-    ];
-
     const matched = dummyResults.filter(item =>
       item.original.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -58,14 +90,45 @@ export default function SearchPage() {
     const formattedResults = matched.map(item => {
       let suggestion = item.original + " ➔ ";
       const suggestions = [];
-      if (filters.includes("costBased")) suggestions.push(`Cost-based: ${item.costBased}`);
-      if (filters.includes("nutrientBased")) suggestions.push(`Nutrient-based: ${item.nutrientBased}`);
-      if (filters.includes("allergenFree")) suggestions.push(`Allergen-free: ${item.allergenFree}`);
-      return suggestion + suggestions.join(", ");
+
+      if (filters.includes("costBased")) {
+        suggestions.push(`Cost-based: ${item.costBased}`);
+      }
+
+      if (filters.includes("nutrientBased") && item.nutrientBased) {
+        savedPreferences
+          .filter(pref => pref.type === 'Nutrient')
+          .forEach(pref => {
+            const match = item.nutrientBased[pref.value];
+            if (match) {
+              suggestions.push(`Nutrient (${pref.value}): ${match}`);
+            }
+          });
+      }
+
+      if (filters.includes("allergenFree") && item.allergenFree) {
+        savedPreferences
+          .filter(pref => pref.type === 'Allergy')
+          .forEach(pref => {
+            const match = item.allergenFree[pref.value];
+            if (match) {
+              suggestions.push(`Allergen-free (${pref.value}): ${match}`);
+            }
+          });
+      }
+
+      return suggestions.length > 0 ? suggestion + suggestions.join(", ") : suggestion + "No suitable alternative found.";
     });
 
     setResults(formattedResults);
   };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('userPreferences');
+    if (saved) {
+      setSavedPreferences(JSON.parse(saved));
+    }
+  }, []);
 
   return (
     <div
@@ -91,7 +154,9 @@ export default function SearchPage() {
             flex: 1,
             padding: '10px',
             borderRadius: '6px',
-            border: '1px solid #ddd',
+            border: '1px solid #a2a2a2',
+            backgroundColor: '#a2a2a2',
+            color: 'white',
           }}
         />
 
@@ -106,6 +171,9 @@ export default function SearchPage() {
                 borderRadius: '6px',
                 whiteSpace: 'nowrap',
                 height: '36px',
+                backgroundColor: '#a2a2a2',
+                color: 'white',
+                border: 'none',
               }}
             >
               Select Filters
@@ -132,12 +200,13 @@ export default function SearchPage() {
           onClick={handleSearch}
           style={{
             padding: '8px 20px',
-            backgroundColor: '#6b7280', // grayish
-            color: '#fff',
+            backgroundColor: '#a2a2a2',
+            color: 'white',
             borderRadius: '6px',
             fontWeight: 'bold',
             fontSize: '14px',
             height: '36px',
+            border: 'none',
           }}
         >
           Search
@@ -146,18 +215,19 @@ export default function SearchPage() {
 
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: '#a2a2a2',
           padding: '20px',
           borderRadius: '6px',
           boxShadow: '0 0 5px rgba(0,0,0,0.1)',
+          color: 'white',
         }}
       >
         {results.length > 0 ? (
           results.map((result, index) => (
-            <div key={index} style={{ color: '#4f4f4f', marginBottom: '10px' }}>{result}</div>
+            <div key={index} style={{ marginBottom: '10px' }}>{result}</div>
           ))
         ) : (
-          <p style={{ color: '#aaa', textAlign: 'center' }}>No results yet</p>
+          <p style={{ textAlign: 'center' }}>No results yet</p>
         )}
       </div>
     </div>
