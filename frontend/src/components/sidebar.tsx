@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onLinkClick }) => {
       </div>
       <div style={lastSectionStyle}>
         <Link href="/dashboard/search" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
-          Search
+          Search Substitute
         </Link>
       </div>
     </div>

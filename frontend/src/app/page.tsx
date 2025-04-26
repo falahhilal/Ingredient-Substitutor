@@ -19,7 +19,7 @@ export default function HomePage() {
           padding: 0,
         }}
       >
-        INGREDIENT SUBSTITUTOR
+        Morsel
       </h1>
 
       <div

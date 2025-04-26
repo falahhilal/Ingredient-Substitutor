@@ -155,7 +155,7 @@ export default function SearchPage() {
             padding: '10px',
             borderRadius: '6px',
             border: '1px solid #a2a2a2',
-            backgroundColor: '#a2a2a2',
+            backgroundColor: '#b0b0b0',
             color: 'white',
           }}
         />
@@ -171,7 +171,7 @@ export default function SearchPage() {
                 borderRadius: '6px',
                 whiteSpace: 'nowrap',
                 height: '36px',
-                backgroundColor: '#a2a2a2',
+                backgroundColor: '#4CAF50',
                 color: 'white',
                 border: 'none',
               }}
@@ -200,10 +200,9 @@ export default function SearchPage() {
           onClick={handleSearch}
           style={{
             padding: '8px 20px',
-            backgroundColor: '#a2a2a2',
+            backgroundColor: '#4CAF50',
             color: 'white',
             borderRadius: '6px',
-            fontWeight: 'bold',
             fontSize: '14px',
             height: '36px',
             border: 'none',
@@ -215,11 +214,12 @@ export default function SearchPage() {
 
       <div
         style={{
-          backgroundColor: '#a2a2a2',
           padding: '20px',
           borderRadius: '6px',
           boxShadow: '0 0 5px rgba(0,0,0,0.1)',
-          color: 'white',
+          border: '1px solid #a2a2a2',
+          backgroundColor: '#b0b0b0',
+          color: '#4f4f4f',
         }}
       >
         {results.length > 0 ? (

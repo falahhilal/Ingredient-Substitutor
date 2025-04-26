@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 
-// Styles
 const containerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -175,8 +174,18 @@ export default function AddRecipePage() {
   const totals = calculateTotals();
 
   return (
-    <div style={containerStyle}>
-      <h1 style={{ fontSize: '24px', color: '#4f4f4f' }}>Add a New Recipe</h1>
+    <div
+        style={{
+          maxWidth: '600px',
+          margin: '0 auto',
+          backgroundColor: '#c9edb6',
+          padding: '40px',
+          borderRadius: '12px',
+          boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+          color: '#4f4f4f',
+        }}
+    >
+      <h1 style={{ fontSize: '24px', color: '#4f4f4f' }}>Add New Recipe</h1>
 
       <input
         type="text"
@@ -216,9 +225,9 @@ export default function AddRecipePage() {
         </div>
       )}
 
-      <h3 style={{ color: '#4f4f4f', marginTop: '20px' }}>Instructions:</h3>
+      <h3 style={{ color: '#4f4f4f', marginTop: '20px' }}>Description:</h3>
       <textarea
-        placeholder="Write cooking instructions here..."
+        placeholder="Write recipe description here..."
         value={instructions}
         onChange={(e) => setInstructions(e.target.value)}
         style={{
@@ -265,42 +274,40 @@ export default function AddRecipePage() {
 
       {/* POPUP */}
       {isPopupOpen && (
-  <div style={popupOverlayStyle}>
-    <div style={{
-      ...popupContentStyle,
-      maxHeight: '90vh', // prevent overflow
-      overflowY: 'auto', // scroll inside popup if content is too big
-      width: '90%',
-      maxWidth: '300px', // even smaller
-    }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '10px' }}>Add Ingredient</h2>
+      <div style={popupOverlayStyle}>
+        <div style={{
+          ...popupContentStyle,
+          maxHeight: '90vh', // prevent overflow
+          overflowY: 'auto', // scroll inside popup if content is too big
+          width: '90%',
+          maxWidth: '300px', // even smaller
+        }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '10px' }}>Add Ingredient</h2>
 
-      {['name', 'quantity', 'calories', 'fats', 'carbs', 'sodium', 'sugar'].map((field) => (
-        <div key={field} style={{ marginBottom: '10px' }}>
-          <label style={{ fontWeight: 'bold', color: '#555' }}>
-            {field.charAt(0).toUpperCase() + field.slice(1)}
-          </label>
-          <input
-            type="text"
-            placeholder={field}
-            value={(popupIngredient as any)[field]}
-            onChange={(e) => handlePopupChange(field as keyof typeof popupIngredient, e.target.value)}
-            style={inputStyle}
-          />
+          {['name', 'quantity', 'calories', 'fats', 'carbs', 'sodium', 'sugar'].map((field) => (
+          <div key={field} style={{ marginBottom: '10px' }}>
+            <label style={{ fontWeight: 'bold', color: '#555' }}>
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </label>
+            <input
+              type="text"
+              placeholder={field}
+              value={(popupIngredient as any)[field]}
+              onChange={(e) => handlePopupChange(field as keyof typeof popupIngredient, e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+          ))}
+
+          <button onClick={saveIngredient} style={{ ...buttonStyle, backgroundColor: '#4CAF50', width: '100%' }}>
+          Save Ingredient
+          </button>
+          <button onClick={() => setIsPopupOpen(false)} style={{ ...buttonStyle, backgroundColor: '#f44336', width: '100%' }}>
+          Cancel
+          </button>
         </div>
-      ))}
-
-      <button onClick={saveIngredient} style={{ ...buttonStyle, backgroundColor: '#4CAF50', width: '100%' }}>
-        Save Ingredient
-      </button>
-      <button onClick={() => setIsPopupOpen(false)} style={{ ...buttonStyle, backgroundColor: '#f44336', width: '100%' }}>
-        Cancel
-      </button>
-    </div>
-  </div>
-)}
-
-      
+      </div>
+      )}
     </div>
   );
 }
