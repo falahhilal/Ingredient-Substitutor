@@ -1,4 +1,4 @@
-/*
+
 'use client';
 
 import React, { useState } from 'react';
@@ -128,7 +128,8 @@ export default function SignupPage() {
     </div>
   );
 }
-*/
+
+/*
 'use client';  
 
 import React, { useState } from 'react';
@@ -281,3 +282,4 @@ export default function SignupPage() {
     </div>
   );
 }
+*/

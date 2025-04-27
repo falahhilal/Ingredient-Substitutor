@@ -20,13 +20,18 @@ const navbarStyle: React.CSSProperties = {
   zIndex: 1000,
 };
 
+const hamburgerContainerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  cursor: 'pointer',
+};
+
 const hamburgerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
   width: '24px',
   height: '18px',
-  cursor: 'pointer',
 };
 
 const lineStyle: React.CSSProperties = {
@@ -36,14 +41,24 @@ const lineStyle: React.CSSProperties = {
   borderRadius: '2px',
 };
 
+const brandTextStyle: React.CSSProperties = {
+  marginLeft: 'auto', // <-- Just added this
+  color: '#cfcccc',
+  fontSize: '20px',
+  fontWeight: 'bold',
+};
+
 const Navbar: React.FC<NavbarProps> = ({ onHamburgerClick }) => {
   return (
     <div style={navbarStyle}>
-      <div style={hamburgerStyle} onClick={onHamburgerClick}>
-        <div style={lineStyle}></div>
-        <div style={lineStyle}></div>
-        <div style={lineStyle}></div>
+      <div style={hamburgerContainerStyle} onClick={onHamburgerClick}>
+        <div style={hamburgerStyle}>
+          <div style={lineStyle}></div>
+          <div style={lineStyle}></div>
+          <div style={lineStyle}></div>
+        </div>
       </div>
+      <div style={brandTextStyle}>ALTBITES</div>
     </div>
   );
 };

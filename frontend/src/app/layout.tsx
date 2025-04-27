@@ -3,9 +3,13 @@ import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'My App',
+  title: 'AltBites',
   description: 'App description here',
+  icons: {
+    icon: '/bg2.png', // point to your actual PNG
+  },
 };
+
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -17,4 +21,3 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
-

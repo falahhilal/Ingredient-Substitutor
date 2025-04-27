@@ -241,7 +241,7 @@ export default function SettingsPage() {
 
         {/* Display Preferences */}
         {preferences.length > 0 && (
-          <div>
+          <div style={{ paddingBottom: '20px' }}>
             <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Your Preferences:</h3>
             <ul>
               {preferences.map((pref, index) => (
