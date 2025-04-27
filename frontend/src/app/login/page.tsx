@@ -1,4 +1,4 @@
-'use client';  
+'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -65,11 +65,34 @@ export default function LoginPage() {
     }
     setError('');
     const loginData = { email, password };
-    console.log('Login data:', loginData);
-
-    router.push('/dashboard');
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        if (data.success) {
+          localStorage.setItem('name', data.name);
+          router.push('/dashboard');
+        } else {
+          setError('Invalid credentials!');
+        }
+      } else {
+        setError(data.message || 'Something went wrong');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('An error occurred. Please try again!');
+    }
   };
-
+  
   return (
     <div style={formContainerStyle}>
       <h1 style={titleStyle}>LOGIN</h1>
