@@ -44,8 +44,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onLinkClick }) => {
   return (
     <div style={sidebarStyle}>
       <div style={sectionStyle}>
-        <Link href="/dashboard/settings" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
-          Settings
+        <Link href="/dashboard/search" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
+          Search Substitute
         </Link>
       </div>
       <div style={sectionStyle}>
@@ -54,8 +54,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onLinkClick }) => {
         </Link>
       </div>
       <div style={lastSectionStyle}>
-        <Link href="/dashboard/search" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
-          Search Substitute
+        <Link href="/dashboard/settings" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
+          Settings
         </Link>
       </div>
     </div>
