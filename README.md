@@ -1,1 +1,2 @@
-# Ingredient-Substitutor
+# Ingredient-Substitutor\
+Our ingredient substitution web application helps users find suitable alternatives when they’re missing an ingredient, making cooking more flexible and convenient. It allows users to adapt recipes based on available ingredients, dietary preferences, and budget constraints. By offering practical solutions and encouraging creativity in the kitchen, the platform ensures that missing an ingredient never becomes a barrier to preparing delicious meal
