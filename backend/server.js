@@ -4,7 +4,7 @@ const authRoutes = require('./Routes/authRoutes');
 //const bodyParser = require('body-parser');
 const recipeRoutes = require('./Routes/recipeRoutes');
 const ingredientRoutes = require('./Routes/ingredientRoutes');
-
+const settingsRoutes = require('./Routes/settingsRoutes');
 
 const app = express();
 
@@ -17,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes); 
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/ingredients', ingredientRoutes);
+app.use('/api/preferences', settingsRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;

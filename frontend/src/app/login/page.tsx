@@ -66,7 +66,7 @@ export default function LoginPage() {
     setError('');
     const loginData = { email, password };
     
-    /*try {
+    try {
       const response = await fetch('http://localhost:5000/api/auth/login', { 
         method: 'POST',
         headers: {
@@ -87,14 +87,14 @@ export default function LoginPage() {
         }
       } else {
         setError(data.message || 'Something went wrong');
-      }*/
-        localStorage.setItem('name', email);   //to be removed
-        localStorage.setItem('name', email); //to be removed
-        router.push('/dashboard');            //to be removed
-    /*} catch (err) {
+      }
+        //localStorage.setItem('name', email);   //to be removed
+        //localStorage.setItem('name', email); //to be removed
+        //router.push('/dashboard');            //to be removed
+    } catch (err) {
       console.error(err);
       setError('An error occurred. Please try again!');
-    }*/
+    }
   };
   
   return (

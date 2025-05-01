@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
   const user = {
-    email: 'Mahrukh@123',
-    username: 'MS',
+    email: localStorage.getItem('email'),
+    username: localStorage.getItem('name'),
   };
 
   const [preferences, setPreferences] = useState<{ type: string; value: string }[]>([]);
@@ -32,18 +32,23 @@ export default function SettingsPage() {
   ];
 
   useEffect(() => {
-    const storedPreferences = localStorage.getItem('userPreferences');
-    if (storedPreferences) {
-      setPreferences(JSON.parse(storedPreferences));
+    const fetchPreferences = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/preferences/preferences?email=${user.email}`);
+        const data = await res.json();
+        if (data.preferences) {
+          setPreferences(JSON.parse(data.preferences));
+        }
+      } catch (err) {
+        console.error('Error fetching preferences:', err);
+      }
+    };
+  
+    if (user.email) {
+      fetchPreferences();
     }
   }, []);
-
-  useEffect(() => {
-    if (preferences.length > 0) {
-      localStorage.setItem('userPreferences', JSON.stringify(preferences));
-    }
-  }, [preferences]);
-
+  
   const handleLogout = () => {
     alert('Logging out...');
   };
@@ -56,18 +61,35 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveSelectedNutrients = () => {
+  const handleSaveSelectedNutrients = async () => {
     const type = selectedPreferenceType === 'Allergy' ? 'Allergy' : 'Nutrient';
     const newPreferences = selectedNutrients.map((item) => ({
       type,
       value: item,
     }));
-    setPreferences([...preferences, ...newPreferences]);
+    const updatedPreferences = [...preferences, ...newPreferences];
+    setPreferences(updatedPreferences);
     setSelectedNutrients([]);
     setSelectedPreferenceType(null);
     setShowPreferenceOptions(false);
+  
+    // Save to backend
+    try {
+      await fetch('http://localhost:5000/api/preferences/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          preferences: updatedPreferences,
+        }),
+      });
+    } catch (err) {
+      console.error('Error saving preferences:', err);
+    }
   };
-
+  
   const handleRemovePreference = (index: number) => {
     const updatedPreferences = preferences.filter((_, i) => i !== index);
     setPreferences(updatedPreferences);

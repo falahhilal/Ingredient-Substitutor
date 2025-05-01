@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from "../../../components/ui/button";
@@ -129,6 +129,198 @@ export default function SearchPage() {
       setSavedPreferences(JSON.parse(saved));
     }
   }, []);
+
+  return (
+    <div
+      style={{
+        maxWidth: '600px',
+        margin: '0 auto',
+        backgroundColor: '#c9edb6',
+        padding: '40px',
+        borderRadius: '12px',
+        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        color: '#4f4f4f',
+      }}
+    >
+      <h1 style={{ fontSize: '28px', marginBottom: '30px' }}>Ingredient Substitution Search</h1>
+
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center' }}>
+        <Input
+          type="text"
+          placeholder="Enter Ingredient"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '10px',
+            borderRadius: '6px',
+            border: '1px solid #a2a2a2',
+            backgroundColor: '#b0b0b0',
+            color: 'white',
+          }}
+        />
+
+        <Popover>
+          <PopoverTrigger>
+            <Button
+              variant="outline"
+              onClick={() => setPopoverOpen(!popoverOpen)}
+              style={{
+                padding: '8px 12px',
+                fontSize: '14px',
+                borderRadius: '6px',
+                whiteSpace: 'nowrap',
+                height: '36px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+              }}
+            >
+              Select Filters
+            </Button>
+          </PopoverTrigger>
+
+          {popoverOpen && (
+            <PopoverContent className="bg-white shadow-lg rounded-md p-4">
+              {filterOptions.map((option) => (
+                <label key={option.value} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                  <Checkbox
+                    checked={filters.includes(option.value)}
+                    onChange={() => handleFilterChange(option.value)}
+                    style={{ marginRight: '8px' }}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </PopoverContent>
+          )}
+        </Popover>
+
+        <Button
+          onClick={handleSearch}
+          style={{
+            padding: '8px 20px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            borderRadius: '6px',
+            fontSize: '14px',
+            height: '36px',
+            border: 'none',
+          }}
+        >
+          Search
+        </Button>
+      </div>
+
+      <div
+        style={{
+          padding: '20px',
+          borderRadius: '6px',
+          boxShadow: '0 0 5px rgba(0,0,0,0.1)',
+          border: '1px solid #a2a2a2',
+          backgroundColor: '#b0b0b0',
+          color: '#4f4f4f',
+        }}
+      >
+        {results.length > 0 ? (
+          results.map((result, index) => (
+            <div key={index} style={{ marginBottom: '10px' }}>{result}</div>
+          ))
+        ) : (
+          <p style={{ textAlign: 'center' }}>No results yet</p>
+        )}
+      </div>
+    </div>
+  );
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'use client'; 
+
+import { useState, useEffect } from 'react';
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Checkbox } from "../../../components/ui/checkbox";
+import { Popover, PopoverTrigger, PopoverContent } from "../../../components/ui/popover";
+
+// --- Added Interface ---
+interface DummyResult {
+  original: string;
+  costBased: string;
+  nutrientBased: { [key: string]: string };
+  allergenFree: { [key: string]: string };
+}
+
+export default function SearchPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<string[]>([]);
+  const [results, setResults] = useState<string[]>([]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [savedPreferences, setSavedPreferences] = useState<{ type: string; value: string }[]>([]);
+
+  const filterOptions = [
+    { label: "Cost-based Alternatives", value: "costBased" },
+    { label: "Nutrient-based Alternatives", value: "nutrientBased" },
+    { label: "Allergen-free Alternatives", value: "allergenFree" },
+  ];
+
+  useEffect(() => {
+    const saved = localStorage.getItem('userPreferences');
+    if (saved) {
+      setSavedPreferences(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleFilterChange = (value: string) => {
+    setFilters((prevFilters) =>
+      prevFilters.includes(value)
+        ? prevFilters.filter((filter) => filter !== value)
+        : [...prevFilters, value]
+    );
+  };
+
+  const handleSearch = async () => {
+    console.log('Searching for:', searchQuery);
+    console.log('With filters:', filters);
+
+    // Send the search query, filters, and email (user preferences) to the backend
+    try {
+      const response = await fetch('http://localhost:5000/api/searchIngredient', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          filters,  // Send the selected filters
+          email: localStorage.getItem('email'),
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setResults(data.results);  // Assuming the results are in data.results
+      } else {
+        setResults([data.message]);  // Show any error messages from the backend
+      }
+    } catch (error) {
+      console.error("Error searching:", error);
+      setResults(['An error occurred while fetching results.']);
+    }
+  };
 
   return (
     <div
