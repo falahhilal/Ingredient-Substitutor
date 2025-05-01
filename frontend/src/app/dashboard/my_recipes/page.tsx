@@ -88,22 +88,23 @@ export default function AddRecipePage() {
     fetchIngredients();
   }, []);
 
+  const fetchRecipes = async () => {
+    try {
+      const userEmail = localStorage.getItem('email') || '';
+      const response = await fetch(`http://localhost:5000/api/recipes/list?user_email=${encodeURIComponent(userEmail)}`);
+      const data = await response.json();
+      if (response.ok) {
+        setSavedRecipes(data);
+      } else {
+        console.error('Error fetching recipes:', data.message);
+      }
+    } catch (err) {
+      console.error('Error fetching recipes:', err);
+    }
+  };
+
   // Fetch saved recipes from API
   useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const userEmail = localStorage.getItem('email') || '';
-        const response = await fetch(`http://localhost:5000/api/recipes/list?user_email=${encodeURIComponent(userEmail)}`);
-        const data = await response.json();
-        if (response.ok) {
-          setSavedRecipes(data);
-        } else {
-          console.error('Error fetching recipes:', data.message);
-        }
-      } catch (err) {
-        console.error('Error fetching recipes:', err);
-      }
-    };
     fetchRecipes();
   }, []);
 
@@ -163,6 +164,7 @@ export default function AddRecipePage() {
         setRecipeName('');
         setIngredients([]);
         setInstructions('');
+        fetchRecipes();      //fetch recipes again 
       } else {
         console.error('Error saving recipe:', data.message);
       }

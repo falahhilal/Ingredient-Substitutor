@@ -19,7 +19,7 @@ export default function HomePage() {
           padding: 0,
         }}
       >
-        Morsel
+        AltBites
       </h1>
 
       <div
