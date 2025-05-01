@@ -1,66 +1,5 @@
 const db = require('../config/db');
 
-/*exports.addRecipe = (req, res) => {
-  const { name, description, ingredients, user_email } = req.body;
-
-  if (!name || !description || ingredients.length === 0) {
-    return res.status(400).json({ message: 'Incomplete recipe data' });
-  }
-
-  const sqlInsertRecipe = 'INSERT INTO recipes (name, description, user_email) VALUES (?, ?, ?)';
-  db.query(sqlInsertRecipe, [name, description, user_email], (err, result) => {
-    if (err) {
-      console.error('Error inserting recipe:', err);
-      return res.status(500).json({ message: 'Error saving recipe' });
-    }
-
-    const recipeId = result.insertId;
-
-    const promises = ingredients.map(ing => {
-      return new Promise((resolve, reject) => {
-        const sqlGetIngredientId = `
-          SELECT ingredient_id FROM ingredients
-          WHERE name = ? AND (user_email = ? OR user_email IS NULL)
-          LIMIT 1
-        `;
-        db.query(sqlGetIngredientId, [ing.name, user_email], (err, results) => {
-          if (err) return reject(err);
-          if (results.length === 0) {
-            return reject(new Error(`Ingredient "${ing.name}" not found`));
-          }
-          resolve([recipeId, results[0].ingredient_id, ing.quantity]);
-        });
-      });
-    });
-
-    Promise.all(promises)
-      .then(values => {
-        const sqlInsertIngredients = `
-          INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity)
-          VALUES ?
-        `;
-
-        db.query(sqlInsertIngredients, [values], (err2) => {
-          if (err2) {
-            console.error('Error inserting into recipe_ingredients:', err2);
-            return res.status(500).json({ message: 'Recipe saved, but failed to link ingredients' });
-          }
-
-          res.status(201).json({
-            id: recipeId,
-            name,
-            description,
-            ingredients
-          });
-        });
-      })
-      .catch(error => {
-        console.error('Ingredient resolution error:', error.message);
-        return res.status(400).json({ message: error.message });
-      });
-  });
-};*/
-
 exports.addRecipe = (req, res) => {
   const { name, description, ingredients, user_email } = req.body;
 
@@ -77,7 +16,7 @@ exports.addRecipe = (req, res) => {
 
     const recipeId = result.insertId;
 
-    // Insert ingredients if they don't exist already, otherwise link to the existing ones
+    // Insert ingredients if they don't exist already
     const promises = ingredients.map(ing => {
       return new Promise((resolve, reject) => {
         // Check if the ingredient already exists
@@ -97,11 +36,20 @@ exports.addRecipe = (req, res) => {
           if (!ingredientId) {
             // Ingredient does not exist, so insert a new one
             const sqlInsertIngredient = `
-              INSERT INTO ingredients (name, quantity, calories, fats, carbs, sodium, sugar, user_email)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              INSERT INTO ingredients (name, quantity, calories, fats, carbs, sodium, sugar, protein, cost, user_email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             db.query(sqlInsertIngredient, [
-              ing.name, ing.quantity, ing.calories, ing.fats, ing.carbs, ing.sodium, ing.sugar, user_email
+              ing.name || '', 
+              ing.quantity || 0, 
+              ing.calories || 0, 
+              ing.fats || 0, 
+              ing.carbs || 0,
+              ing.sodium || 0, 
+              ing.sugar || 0, 
+              ing.protein || 0, 
+              ing.cost || 0, 
+              user_email || null
             ], (err, insertResult) => {
               if (err) {
                 reject(err);
@@ -117,17 +65,17 @@ exports.addRecipe = (req, res) => {
       });
     });
 
-    // Once all ingredients are inserted or found, link them to the recipe
+    // all ingredients are inserted or found, link them to the recipe
     Promise.all(promises)
       .then(ingredientIds => {
-        // Link the ingredients to the recipe
+        // Link ingredients to recipe
         const ingredientPromises = ingredientIds.map(({ id, quantity }) => {
           return new Promise((resolve, reject) => {
             const sqlInsertRecipeIngredient = `
               INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity)
               VALUES (?, ?, ?)
             `;
-            db.query(sqlInsertRecipeIngredient, [recipeId, ingredientId, quantity], (err) => {
+            db.query(sqlInsertRecipeIngredient, [recipeId, id, quantity], (err) => {
               if (err) {
                 reject(err);
                 return;
@@ -174,11 +122,13 @@ exports.getRecipes = (req, res) => {
       i.allergens
     FROM recipes r
     LEFT JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
-    LEFT JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+    LEFT JOIN ingredients i 
+    ON ri.ingredient_id = i.ingredient_id 
+    AND (i.user_email = ? OR i.user_email IS NULL)
     WHERE r.user_email = ?
   `;
 
-  db.query(sql, [userEmail], (err, results) => {
+  db.query(sql, [userEmail, userEmail], (err, results) => {
     if (err) {
       console.error('Error fetching recipes:', err);
       return res.status(500).json({ message: 'Error fetching recipes' });
