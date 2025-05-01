@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const db = require('../config/db'); 
 
 exports.signup = (req, res) => {
-  const { username, email, password } = req.body;
+  const { name, email, password } = req.body;
 
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) {
@@ -12,17 +12,16 @@ exports.signup = (req, res) => {
 
     const sql = 'INSERT INTO user (name, email, password) VALUES (?, ?, ?)';
 
-    db.query(sql, [username, email, hashedPassword], (err, result) => {
+    db.query(sql, [name, email, hashedPassword], (err, result) => {
       if (err) {
         console.error('Error inserting user:', err);
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      res.status(201).json({ message: 'User created successfully', success: true, name: username, });
+      res.status(201).json({ message: 'User created successfully', success: true, name: name, email: email,  });
     });
   });
 };
-
 
 exports.login = (req, res) => {
   const { email, password } = req.body;
@@ -57,7 +56,7 @@ exports.login = (req, res) => {
       }
 
       // User authenticated
-      res.status(200).json({ message: 'Login successful', success: true, name: user.name, });
+      res.status(200).json({ message: 'Login successful', success: true, name: user.name, email: user.email });
     });
   });
 };

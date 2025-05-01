@@ -53,7 +53,7 @@ const buttonStyle: React.CSSProperties = {
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
+  const [name, setname] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -71,29 +71,30 @@ export default function SignupPage() {
     setError('');
 
     try {
-      /*const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, username, password }),
+        body: JSON.stringify({ email, name, password }),
       });
       
       const data = await response.json();
       if (response.ok) {
         setSuccessMessage('Signup successful! Redirecting...');
         localStorage.setItem('name', data.name);
+        localStorage.setItem('email', data.email);
         setTimeout(() => {
           router.push('/dashboard'); 
         }, 2000);
       } else {
         setError(data.error || 'Something went wrong');
-      }*/
-        setSuccessMessage('Signup successful! Redirecting...');    //to be removed
+      }
+        /*setSuccessMessage('Signup successful! Redirecting...');    //to be removed
         localStorage.setItem('name', username);
         setTimeout(() => {
           router.push('/dashboard');
-        }, 2000);                                          //to be removed
+        }, 2000);      */                                    //to be removed
     } catch (error) {
       setError('Error connecting to server!');
       console.error('Error:', error);
@@ -116,12 +117,12 @@ export default function SignupPage() {
           />
         </div>
         <div>
-          <label>Username:</label>
+          <label>Name:</label>
           <input
             type="text"
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            name="name"
+            value={name}
+            onChange={(e) => setname(e.target.value)}
             required
             style={inputStyle}
           />

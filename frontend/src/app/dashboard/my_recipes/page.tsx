@@ -43,11 +43,10 @@ const popupContentStyle: React.CSSProperties = {
   borderRadius: '10px',
   width: '90%',
   maxWidth: '340px',
-  maxHeight: '80vh', 
-  overflowY: 'auto',  
-  overflowX:'hidden',
+  maxHeight: '80vh',
+  overflowY: 'auto',
+  overflowX: 'hidden',
 };
-
 
 export default function AddRecipePage() {
   const [recipeName, setRecipeName] = useState('');
@@ -70,66 +69,42 @@ export default function AddRecipePage() {
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Fetch ingredients from API
   useEffect(() => {
-    const storedRecipes = localStorage.getItem('savedRecipes');
-    if (storedRecipes) {
-      setSavedRecipes(JSON.parse(storedRecipes));
-    }
+    const fetchIngredients = async () => {
+      try {
+        const userEmail = localStorage.getItem('email') || '';
+        const response = await fetch(`http://localhost:5000/api/ingredients/list?user_email=${encodeURIComponent(userEmail)}`);
+        const data = await response.json();
+        if (response.ok) {
+          setAllIngredients(data);
+        } else {
+          console.error('Error fetching ingredients:', data.message);
+        }
+      } catch (err) {
+        console.error('Error fetching ingredients:', err);
+      }
+    };
+    fetchIngredients();
   }, []);
 
+  // Fetch saved recipes from API
   useEffect(() => {
-    localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
-  }, [savedRecipes]);
-
-  useEffect(() => {
-    const ingredientData = [
-      {
-        name: 'Tomato',
-        quantity: '1 medium',
-        calories: '22',
-        fats: '0.2',
-        carbs: '4.8',
-        sodium: '6',
-        sugar: '3.2',
-      },
-      {
-        name: 'Chicken Breast',
-        quantity: '100g',
-        calories: '165',
-        fats: '3.6',
-        carbs: '0',
-        sodium: '74',
-        sugar: '0',
-      },
-      {
-        name: 'Rice (Cooked)',
-        quantity: '1 cup',
-        calories: '206',
-        fats: '0.4',
-        carbs: '45',
-        sodium: '1',
-        sugar: '0.1',
-      },
-      {
-        name: 'Olive Oil',
-        quantity: '1 tbsp',
-        calories: '119',
-        fats: '13.5',
-        carbs: '0',
-        sodium: '0.3',
-        sugar: '0',
-      },
-      {
-        name: 'Salt',
-        quantity: '1 tsp',
-        calories: '0',
-        fats: '0',
-        carbs: '0',
-        sodium: '2325',
-        sugar: '0',
+    const fetchRecipes = async () => {
+      try {
+        const userEmail = localStorage.getItem('email') || '';
+        const response = await fetch(`http://localhost:5000/api/recipes/list?user_email=${encodeURIComponent(userEmail)}`);
+        const data = await response.json();
+        if (response.ok) {
+          setSavedRecipes(data);
+        } else {
+          console.error('Error fetching recipes:', data.message);
+        }
+      } catch (err) {
+        console.error('Error fetching recipes:', err);
       }
-    ];
-    setAllIngredients(ingredientData);
+    };
+    fetchRecipes();
   }, []);
 
   const openAddIngredientPopup = () => {
@@ -162,20 +137,38 @@ export default function AddRecipePage() {
     setIsPopupOpen(false);
   };
 
-  const handleSaveRecipe = () => {
+  const handleSaveRecipe = async () => {
     if (!recipeName || ingredients.length === 0 || !instructions) {
       alert('Please complete all fields!');
       return;
     }
     const newRecipe = {
       name: recipeName,
+      description: instructions, 
       ingredients,
-      instructions,
+      user_email:localStorage.getItem('email'),
     };
-    setSavedRecipes([...savedRecipes, newRecipe]);
-    setRecipeName('');
-    setIngredients([]);
-    setInstructions('');
+    console.log('Ingredients being sent:', ingredients);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/recipes/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecipe),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setSavedRecipes([...savedRecipes, data]);
+        setRecipeName('');
+        setIngredients([]);
+        setInstructions('');
+      } else {
+        console.error('Error saving recipe:', data.message);
+      }
+    } catch (err) {
+      console.error('Error saving recipe:', err);
+    }
   };
 
   const deleteIngredient = (index: number) => {
@@ -191,17 +184,25 @@ export default function AddRecipePage() {
   };
 
   const calculateTotals = () => {
-    const totals = { calories: 0, fats: 0, carbs: 0, sodium: 0, sugar: 0 };
-    ingredients.forEach((ingredient) => {
-      totals.calories += parseFloat(ingredient.calories) || 0;
-      totals.fats += parseFloat(ingredient.fats) || 0;
-      totals.carbs += parseFloat(ingredient.carbs) || 0;
-      totals.sodium += parseFloat(ingredient.sodium) || 0;
-      totals.sugar += parseFloat(ingredient.sugar) || 0;
+    const totals = {
+      calories: 0,
+      fats: 0,
+      carbs: 0,
+      sodium: 0,
+      sugar: 0,
+    };
+  
+    ingredients.forEach(ingredient => {
+      totals.calories += parseFloat(ingredient.calories || '0');
+      totals.fats += parseFloat(ingredient.fats || '0');
+      totals.carbs += parseFloat(ingredient.carbs || '0');
+      totals.sodium += parseFloat(ingredient.sodium || '0');
+      totals.sugar += parseFloat(ingredient.sugar || '0');
     });
+  
     return totals;
   };
-
+  
   const totals = calculateTotals();
 
   return (
@@ -254,6 +255,10 @@ export default function AddRecipePage() {
                 <div
                   key={index}
                   onClick={() => {
+                    const selectedIngredient = {
+                      ...ingredient,
+                      quantity: ingredient.quantity || '1', // Set default quantity to '1' 
+                    };
                     setIngredients([...ingredients, ingredient]);
                     setIsDropdownOpen(false);
                     setIngredientSearch('');
@@ -315,12 +320,13 @@ export default function AddRecipePage() {
                 <div>
                   <h4>Ingredients:</h4>
                   <ul>
-                    {recipe.ingredients.map((ing: any, idx: number) => (
+                  {Array.isArray(recipe.ingredients) &&
+                    recipe.ingredients.map((ing: any, idx: number) => (
                       <li key={idx}>{ing.quantity} of {ing.name}</li>
                     ))}
                   </ul>
                   <h4>Instructions:</h4>
-                  <p>{recipe.instructions}</p>
+                  <p>{recipe.description}</p>
                 </div>
               )}
             </div>

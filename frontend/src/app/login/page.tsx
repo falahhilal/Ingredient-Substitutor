@@ -64,10 +64,10 @@ export default function LoginPage() {
       return;
     }
     setError('');
-    //const loginData = { email, password };
+    const loginData = { email, password };
     
     try {
-      /*const response = await fetch('http://localhost:5000/api/auth/login', { 
+      const response = await fetch('http://localhost:5000/api/auth/login', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,15 +80,16 @@ export default function LoginPage() {
       if (response.ok) {
         if (data.success) {
           localStorage.setItem('name', data.name);
+          localStorage.setItem('email', data.email);
           router.push('/dashboard');
         } else {
           setError('Invalid credentials!');
         }
       } else {
         setError(data.message || 'Something went wrong');
-      }*/
-        localStorage.setItem('name', email); //to be removed
-        router.push('/dashboard');            //to be removed
+      }
+        //localStorage.setItem('name', email); //to be removed
+        //router.push('/dashboard');            //to be removed
     } catch (err) {
       console.error(err);
       setError('An error occurred. Please try again!');
