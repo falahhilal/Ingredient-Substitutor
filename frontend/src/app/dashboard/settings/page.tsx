@@ -14,15 +14,23 @@ export default function SettingsPage() {
   const [selectedNutrients, setSelectedNutrients] = useState<string[]>([]);
 
   const nutrientOptions = [
-    "High Sodium", "Low Sodium",
-    "High Protein", "Low Protein",
-    "High Calories", "Low Calories",
-    "High Carbohydrates", "Low Carbohydrates",
-    "High Sugar", "Low Sugar",
-    "High in Fat", "Low in Fat"
+    'High Sodium', 'Low Sodium',
+    'High Protein', 'Low Protein',
+    'High Calories', 'Low Calories',
+    'High Carbohydrates', 'Low Carbohydrates',
+    'High Sugar', 'Low Sugar',
+    'High in Fat', 'Low in Fat',
   ];
 
-  // Fetch saved preferences from localStorage when the page loads
+  const allergyOptions = [
+    'Gluten Allergy',
+    'Peanut Allergy',
+    'Lactose',
+    'Soy Allergy',
+    'Shellfish Allergy',
+    'Egg Allergy',
+  ];
+
   useEffect(() => {
     const storedPreferences = localStorage.getItem('userPreferences');
     if (storedPreferences) {
@@ -30,7 +38,6 @@ export default function SettingsPage() {
     }
   }, []);
 
-  // Save preferences to localStorage whenever the preferences state changes
   useEffect(() => {
     if (preferences.length > 0) {
       localStorage.setItem('userPreferences', JSON.stringify(preferences));
@@ -41,33 +48,24 @@ export default function SettingsPage() {
     alert('Logging out...');
   };
 
-  const handleAddPreference = (value: string) => {
-    if (selectedPreferenceType) {
-      const newPreferences = [...preferences, { type: selectedPreferenceType, value }];
-      setPreferences(newPreferences);
-      setSelectedPreferenceType(null);
-      setShowPreferenceOptions(false);
-      setSelectedNutrients([]);
-    }
-  };
-
-  const handleSaveSelectedNutrients = () => {
-    const newPreferences = selectedNutrients.map((nutrient) => ({
-      type: 'Nutrient',
-      value: nutrient,
-    }));
-    setPreferences([...preferences, ...newPreferences]);
-    setSelectedNutrients([]);
-    setSelectedPreferenceType(null);
-    setShowPreferenceOptions(false);
-  };
-
   const handleCheckboxChange = (option: string) => {
     if (selectedNutrients.includes(option)) {
       setSelectedNutrients(selectedNutrients.filter((item) => item !== option));
     } else {
       setSelectedNutrients([...selectedNutrients, option]);
     }
+  };
+
+  const handleSaveSelectedNutrients = () => {
+    const type = selectedPreferenceType === 'Allergy' ? 'Allergy' : 'Nutrient';
+    const newPreferences = selectedNutrients.map((item) => ({
+      type,
+      value: item,
+    }));
+    setPreferences([...preferences, ...newPreferences]);
+    setSelectedNutrients([]);
+    setSelectedPreferenceType(null);
+    setShowPreferenceOptions(false);
   };
 
   const handleRemovePreference = (index: number) => {
@@ -185,29 +183,9 @@ export default function SettingsPage() {
                   Add Nutrient Preference
                 </button>
               </>
-            ) : selectedPreferenceType === 'Allergy' ? (
-              <div>
-                <input
-                  type="text"
-                  placeholder="Enter Allergy"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget.value.trim() !== '') {
-                      handleAddPreference(e.currentTarget.value.trim());
-                      e.currentTarget.value = '';
-                    }
-                  }}
-                  style={{
-                    padding: '8px',
-                    borderRadius: '6px',
-                    border: '1px solid #a2a2a2',
-                    marginBottom: '10px',
-                    width: '100%',
-                  }}
-                />
-              </div>
             ) : (
               <div>
-                {nutrientOptions.map((option) => (
+                {(selectedPreferenceType === 'Allergy' ? allergyOptions : nutrientOptions).map((option) => (
                   <label key={option} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                     <input
                       type="checkbox"
