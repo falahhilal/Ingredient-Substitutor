@@ -5,6 +5,7 @@ const authRoutes = require('./Routes/authRoutes');
 const recipeRoutes = require('./Routes/recipeRoutes');
 const ingredientRoutes = require('./Routes/ingredientRoutes');
 const settingsRoutes = require('./Routes/settingsRoutes');
+const searchRoutes = require('./Routes/searchRoutes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/preferences', settingsRoutes);
+app.use('/api', searchRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;

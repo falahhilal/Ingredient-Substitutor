@@ -256,14 +256,6 @@ import { Input } from "../../../components/ui/input";
 import { Checkbox } from "../../../components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "../../../components/ui/popover";
 
-// --- Added Interface ---
-interface DummyResult {
-  original: string;
-  costBased: string;
-  nutrientBased: { [key: string]: string };
-  allergenFree: { [key: string]: string };
-}
-
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<string[]>([]);
@@ -272,9 +264,9 @@ export default function SearchPage() {
   const [savedPreferences, setSavedPreferences] = useState<{ type: string; value: string }[]>([]);
 
   const filterOptions = [
-    { label: "Cost-based Alternatives", value: "costBased" },
-    { label: "Nutrient-based Alternatives", value: "nutrientBased" },
-    { label: "Allergen-free Alternatives", value: "allergenFree" },
+    { label: "Cost-based Alternatives", value: "Low Cost" },
+    { label: "Nutrient-based Alternatives", value: "Nutrient" },
+    { label: "Allergen-free Alternatives", value: "Allergy" },
   ];
 
   useEffect(() => {

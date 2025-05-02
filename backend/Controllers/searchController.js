@@ -1,91 +1,242 @@
-const db = require('../config/db');  // Ensure you're using the 'mysql' package
+const db = require('../config/db');
+
+/*exports.searchIngredient = (req, res) => {
+  const { query, filters, email } = req.body;
+
+  if (!query || !filters || !email) {
+    return res.status(400).json({ success: false, message: 'Missing input fields.' });
+  }
+
+  // Log the incoming data
+  console.log(`Searching for ingredient: ${query}`);
+  console.log(`With filters:`, filters);
+
+  // Find the ingredient by name
+  console.log('Searching for ingredient:', query);
+  db.query('SELECT ingredient_id FROM ingredients WHERE name = ?', [query], (error, result) => {
+    if (error) {
+      console.error('Database query error:', error);
+      return res.status(500).json({ success: false, message: 'Database query error.' });
+    }
+
+    const ingredientRows = result; // or `result.rows` depending on the library
+
+    // Log the query result
+    console.log('Ingredient query result:', ingredientRows);
+
+    // Check if ingredient is found
+    if (!ingredientRows || ingredientRows.length === 0) {
+      console.log(`Ingredient "${query}" not found in the database.`);
+      return res.status(404).json({ success: false, message: `Ingredient "${query}" not found.` });
+    }
+
+    const ingredientId = ingredientRows[0].ingredient_id;
+    console.log(`Ingredient found with ID: ${ingredientId}`);
+
+    // Get user preferences from the user table
+    db.query('SELECT preferences FROM user WHERE email = ?', [email], (error, result1) => {
+      if (error) {
+        console.error('Database query error:', error);
+        return res.status(500).json({ success: false, message: 'Database query error.' });
+      }
+
+      const userRows = result1; // or `result.rows` depending on the library
+
+      console.log(`User preferences for ${email}:`, userRows);
+
+      if (userRows.length === 0 || !userRows[0].preferences) {
+        console.log(`No preferences found for user ${email}.`);
+        return res.status(404).json({ success: false, message: 'User or preferences not found.' });
+      }
+
+      let preferences;
+      try {
+        preferences = JSON.parse(userRows[0].preferences);
+        console.log('Parsed preferences:', preferences);
+      } catch (err) {
+        console.log('Error parsing preferences:', err);
+        return res.status(500).json({ success: false, message: 'Invalid preferences format in DB.' });
+      }
+
+      // Process filters and search for substitutions
+      const results = [];
+      for (const filter of filters) {
+        let typeToMatch = null;
+        if (filter === 'allergenFree') typeToMatch = 'Allergy';
+        else if (filter === 'nutrientBased') typeToMatch = 'Nutrient';
+        else if (filter === 'costBased') typeToMatch = 'Lower Cost';
+
+        if (!typeToMatch) continue;
+
+        console.log(`Processing filter: ${filter} with type: ${typeToMatch}`);
+
+        if (typeToMatch === 'Lower Cost') {
+          db.query(
+            `SELECT i.name AS substitute_name 
+             FROM substitutions s 
+             JOIN ingredients i ON s.substitute_id = i.ingredient_id 
+             WHERE s.ingredient_id = ? AND s.criteria = 'Lower Cost'`,
+            [ingredientId],
+            (error, result2) => {
+              if (error) {
+                console.error('Database query error:', error);
+                return res.status(500).json({ success: false, message: 'Database query error.' });
+              }
+
+              const subs = result2; 
+              console.log('Query result for cost-based subs:', subs);
+
+              if (Array.isArray(subs)) {
+                subs.forEach(sub => {
+                  results.push(`[Cost-Based] Substitute: ${sub.substitute_name}`);
+                });
+              } else {
+                console.error('Expected an array but got:', subs);
+              }
+            }
+          );
+        } else {
+          const matchedPrefs = preferences.filter(p => p.type === typeToMatch);
+
+          for (const pref of matchedPrefs) {
+            db.query(
+              `SELECT i.name AS substitute_name 
+               FROM substitutions s 
+               JOIN ingredients i ON s.substitute_id = i.ingredient_id 
+               WHERE s.ingredient_id = ? AND s.criteria = ?`,
+              [ingredientId, pref.value],
+              (error, result3) => {
+                if (error) {
+                  console.error('Database query error:', error);
+                  return res.status(500).json({ success: false, message: 'Database query error.' });
+                }
+
+                const subs = result3; 
+                console.log(`Query result for ${typeToMatch} subs:`, subs);
+
+                if (Array.isArray(subs)) {
+                  subs.forEach(sub => {
+                    results.push(`[${typeToMatch}] (${pref.value}) Substitute: ${sub.substitute_name}`);
+                  });
+                } else {
+                  console.error('Expected an array but got:', subs);
+                }
+              }
+            );
+          }
+        }
+      }
+
+      if (results.length === 0) {
+        console.log('No matching substitutes found.');
+        return res.status(200).json({ success: true, results: ['No matching substitutes found.'] });
+      }
+
+      console.log('Substitute results:', results);
+      res.json({ success: true, results });
+    });
+  });
+};*/
 
 exports.searchIngredient = (req, res) => {
   const { query, filters, email } = req.body;
 
-  const cleanedQuery = query.trim().toLowerCase();
+  if (!query || !filters || !email) {
+    return res.status(400).json({ success: false, message: 'Missing input fields.' });
+  }
 
-  // First: Get user preferences
-  db.query('SELECT preferences FROM Users WHERE email = ?', [email], (err, userResults) => {
-    if (err) {
-      console.error('Error fetching user preferences:', err);
-      return res.status(500).json({ error: 'Server error' });
+  console.log(`Searching for ingredient: ${query}`);
+  console.log(`With filters:`, filters);
+
+  db.query('SELECT ingredient_id FROM ingredients WHERE name = ?', [query], (error, result) => {
+    if (error) return res.status(500).json({ success: false, message: 'Database error.' });
+
+    if (!result || result.length === 0) {
+      return res.status(404).json({ success: false, message: `Ingredient "${query}" not found.` });
     }
 
-    if (userResults.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const ingredientId = result[0].ingredient_id;
 
-    // Parse the JSON preferences
-    const preferences = JSON.parse(userResults[0].preferences);
-    const preferenceValue = preferences.value;
+    db.query('SELECT preferences FROM user WHERE email = ?', [email], async (error, result1) => {
+      if (error) return res.status(500).json({ success: false, message: 'Database error.' });
 
-    console.log('User preference value:', preferenceValue);  // Check if it's correctly parsed
+      let preferences = [];
+if (result1 && result1.length > 0 && result1[0].preferences) {
+  try {
+    preferences = JSON.parse(result1[0].preferences);
+  } catch (e) {
+    return res.status(500).json({ success: false, message: 'Invalid preferences format.' });
+  }
+}
 
-    // Second: Get ingredient ID
-    db.query('SELECT ingredient_id FROM Ingredients WHERE LOWER(name) = ?', [cleanedQuery], (err, ingredientResults) => {
-      if (err) {
-        console.error('Error fetching ingredient:', err);
-        return res.status(500).json({ error: 'Server error' });
-      }
+      const promises = [];
 
-      if (ingredientResults.length === 0) {
-        return res.json({ success: false, message:  `Ingredient not found: "${query}"`});
-      }
-
-      const ingredientId = ingredientResults[0].ingredient_id;
-
-      // Third: Get substitutes based on user preferences and selected filters
-      let filterQueries = [];
-
-      if (filters.includes("nutrientBased")) {
-        filterQueries.push('criteria = "Low Sugar" OR criteria = "Low Carbohydrates"'); // Example: you can add more nutrient preferences
-      }
-
-      if (filters.includes("allergenFree")) {
-        filterQueries.push('criteria = "Lactose-Free"');  // Example: Adjust based on your allergen preference field
-      }
-
-      if (filters.includes("costBased")) {
-        filterQueries.push('criteria = "Cost-Based"');  // Example: Adjust based on your cost-based criteria
-      }
-
-      const filterQuery = filterQueries.length > 0 ? filterQueries.join(" OR ") : '1'; // Default to '1' (no filter)
-
-      db.query(
-        `SELECT substitute_id FROM Substitution WHERE ingredient_id = ? AND (${filterQuery})`,
-        [ingredientId],
-        (err, subResults) => {
-          if (err) {
-            console.error('Error fetching substitutions:', err);
-            return res.status(500).json({ error: 'Server error' });
-          }
-
-          if (subResults.length === 0) {
-            return res.json({ success: true, results: [`No substitutions found for ${query} with selected filters`] });
-          }
-
-          const substituteIds = subResults.map(r => r.substitute_id);
-
-          // Fourth: Get substitute names from Ingredients table
-          db.query(
-            'SELECT name FROM Ingredients WHERE ingredient_id IN (?)',
-            [substituteIds],
-            (err, namesResults) => {
-              if (err) {
-                console.error('Error fetching substitute names:', err);
-                return res.status(500).json({ error: 'Server error' });
-              }
-
-              const formatted = namesResults.map(row =>
-                `${query} ➔ substitute: ${row.name} (based on selected filters)`
-              );
-
-              res.json({ success: true, results: formatted });
-            }
-          );
+      for (const filter of filters) {
+        let typeToMatch = null;
+      
+        if (filter === 'costBased' || filter === 'Lower Cost') {
+          typeToMatch = 'Lower Cost';
+        } else if (filter === 'allergenFree' || filter === 'Allergy') {
+          typeToMatch = 'Allergy';
+        } else if (filter === 'nutrientBased' || filter === 'Nutrient') {
+          typeToMatch = 'Nutrient';
+        } else {
+          continue; // skip unknown filters
         }
-      );
+      
+        console.log(`Mapped filter "${filter}" to type: ${typeToMatch}`);
+      
+        if (typeToMatch === 'Lower Cost') {
+          // your costBased query
+          promises.push(new Promise((resolve, reject) => {
+            db.query(
+              `SELECT i.name AS substitute_name
+               FROM substitutions s
+               JOIN ingredients i ON s.substitute_id = i.ingredient_id
+               WHERE s.ingredient_id = ? AND s.criteria = 'Lower Cost'`,
+              [ingredientId],
+              (err, result2) => {
+                if (err) return reject(err);
+                const subs = result2.map(sub => `[Cost-Based] Substitute: ${sub.substitute_name}`);
+                resolve(subs);
+              }
+            );
+          }));
+        } else {
+          // Allergy or Nutrient
+          const matchedPrefs = preferences.filter(p => p.type === typeToMatch);
+          for (const pref of matchedPrefs) {
+            promises.push(new Promise((resolve, reject) => {
+              db.query(
+                `SELECT i.name AS substitute_name
+                 FROM substitutions s
+                 JOIN ingredients i ON s.substitute_id = i.ingredient_id
+                 WHERE s.ingredient_id = ? AND s.criteria = ?`,
+                [ingredientId, pref.value],
+                (err, result3) => {
+                  if (err) return reject(err);
+                  const subs = result3.map(sub =>
+                    `[${typeToMatch}] (${pref.value}) Substitute: ${sub.substitute_name}`
+                  );
+                  resolve(subs);
+                }
+              );
+            }));
+          }
+        }
+      }
+    
+      try {
+        const allResults = await Promise.all(promises);
+        const flattened = allResults.flat();
+        if (flattened.length === 0) {
+          return res.status(200).json({ success: true, results: ['No matching substitutes found.'] });
+        }
+        return res.json({ success: true, results: flattened });
+      } catch (err) {
+        console.error('Query error:', err);
+        return res.status(500).json({ success: false, message: 'Error fetching substitutes.' });
+      }
     });
   });
 };
