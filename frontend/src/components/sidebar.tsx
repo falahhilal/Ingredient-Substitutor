@@ -27,7 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onLinkClick }) => {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '33.33%', 
+    height: '25%', 
     borderBottom: '2px solid #a2a2a2',
     fontWeight: 'bold',
     color: '#4f4f4f',
@@ -51,6 +51,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onLinkClick }) => {
       <div style={sectionStyle}>
         <Link href="/dashboard/my_recipes" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
           My Recipes
+        </Link>
+      </div>
+      <div style={sectionStyle}>
+        <Link href="/dashboard/UserActivity" style={{ textDecoration: 'none', color: 'inherit' }} onClick={onLinkClick}>
+          User Activity Logs
         </Link>
       </div>
       <div style={lastSectionStyle}>

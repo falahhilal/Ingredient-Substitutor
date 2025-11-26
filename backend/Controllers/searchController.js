@@ -7,9 +7,6 @@ exports.searchIngredient = (req, res) => {
     return res.status(400).json({ success: false, message: 'Missing input fields.' });
   }
 
-  console.log(`Searching for ingredient: ${query}`);
-  console.log(`With filters:`, filters);
-
   db.query('SELECT ingredient_id FROM ingredients WHERE name = ?', [query], (error, result) => {
     if (error) return res.status(500).json({ success: false, message: 'Database error.' });
 
@@ -19,11 +16,18 @@ exports.searchIngredient = (req, res) => {
 
     const ingredientId = result[0].ingredient_id;
 
-    db.query('SELECT preferences FROM user WHERE email = ?', [email], async (error, result1) => {
+    // ----------- Get user_id + preferences ----------
+    db.query('SELECT user_id, preferences FROM user WHERE email = ?', [email], async (error, result1) => {
       if (error) return res.status(500).json({ success: false, message: 'Database error.' });
 
+      if (!result1 || result1.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+      }
+
+      const userId = result1[0].user_id;
+
       let preferences = [];
-      if (result1 && result1.length > 0 && result1[0].preferences) {
+      if (result1[0].preferences) {
         try {
           preferences = JSON.parse(result1[0].preferences);
         } catch (e) {
@@ -36,55 +40,71 @@ exports.searchIngredient = (req, res) => {
       for (const filter of filters) {
         let typeToMatch = null;
 
-        if (filter === 'costBased' || filter === 'Lower Cost' || filter === 'Low Cost' || filter === 'lower cost' || filter === 'low cost') {
-          // Handle cost filter separately
+        // ---------- COST ----------
+        if (filter.toLowerCase().includes('low cost')) {
           promises.push(new Promise((resolve, reject) => {
-            console.log('Executing Lower Cost filter');
             db.query(
-              `SELECT i.name AS substitute_name
+              `SELECT s.substitution_id, i.name AS substitute_name,
+                      (SELECT AVG(rating) FROM substitution_activity sa WHERE sa.substitution_id = s.substitution_id) AS avg_rating
                FROM substitutions s
                JOIN ingredients i ON s.substitute_id = i.ingredient_id
                WHERE s.ingredient_id = ? AND s.criteria = 'Lower Cost'`,
               [ingredientId],
               (err, result2) => {
                 if (err) return reject(err);
-                if (result2.length > 0) {
-                  console.log('Found cost-based substitutes:', result2);
-                  const subs = result2.map(sub => `[Cost-Based] Substitute: ${sub.substitute_name}`);
-                  resolve(subs);
-                } else {
-                  console.log('No cost-based substitutes found.');
-                  resolve([]); // No results, resolve with an empty array
-                }
+
+                // LOG activity for each substitution
+                result2.forEach(sub => {
+                  db.query(
+                    `INSERT INTO substitution_activity (user_id, substitution_id)
+                     VALUES (?, ?)`,
+                    [userId, sub.substitution_id]
+                  );
+                });
+
+                const subs = result2.map(sub => {
+                  const ratingText = sub.avg_rating ? ` (Avg Rating: ${sub.avg_rating.toFixed(1)} ⭐)` : ' (Avg Rating: No ratings yet)';
+                  return `[Cost-Based] Substitute: ${sub.substitute_name}${ratingText}`;
+                });
+                resolve(subs);
               }
             );
           }));
-        } else if (filter === 'allergenFree' || filter === 'Allergy') {
-          typeToMatch = 'Allergy';
-        } else if (filter === 'nutrientBased' || filter === 'Nutrient') {
-          typeToMatch = 'Nutrient';
-        } else {
-          continue; // skip unknown filters
         }
 
-        if (typeToMatch) {
-          console.log(`Mapped filter "${filter}" to type: ${typeToMatch}`);
+        // ---------- Nutrient / Allergy ----------
+        else if (filter === 'Allergy') typeToMatch = 'Allergy';
+        else if (filter === 'Nutrient') typeToMatch = 'Nutrient';
+        else continue;
 
-          // Allergy or Nutrient filters
+        if (typeToMatch) {
           const matchedPrefs = preferences.filter(p => p.type === typeToMatch);
+
           for (const pref of matchedPrefs) {
             promises.push(new Promise((resolve, reject) => {
               db.query(
-                `SELECT i.name AS substitute_name
+                `SELECT s.substitution_id, i.name AS substitute_name,
+                        (SELECT AVG(rating) FROM substitution_activity sa WHERE sa.substitution_id = s.substitution_id) AS avg_rating
                  FROM substitutions s
                  JOIN ingredients i ON s.substitute_id = i.ingredient_id
                  WHERE s.ingredient_id = ? AND s.criteria = ?`,
                 [ingredientId, pref.value],
                 (err, result3) => {
                   if (err) return reject(err);
-                  const subs = result3.map(sub =>
-                    `[${typeToMatch}] (${pref.value}) Substitute: ${sub.substitute_name}`
-                  );
+
+                  // LOG activity
+                  result3.forEach(sub => {
+                    db.query(
+                      `INSERT INTO substitution_activity (user_id, substitution_id)
+                       VALUES (?, ?)`,
+                      [userId, sub.substitution_id]
+                    );
+                  });
+
+                  const subs = result3.map(sub => {
+                    const ratingText = sub.avg_rating ? ` (Avg Rating: ${sub.avg_rating.toFixed(1)} )` : ' (Avg Rating: No ratings yet)';
+                    return `[${typeToMatch}] (${pref.value}) Substitute: ${sub.substitute_name}${ratingText}`;
+                  });
                   resolve(subs);
                 }
               );
@@ -96,10 +116,13 @@ exports.searchIngredient = (req, res) => {
       try {
         const allResults = await Promise.all(promises);
         const flattened = allResults.flat();
+
         if (flattened.length === 0) {
           return res.status(200).json({ success: true, results: ['No matching substitutes found.'] });
         }
+
         return res.json({ success: true, results: flattened });
+
       } catch (err) {
         console.error('Query error:', err);
         return res.status(500).json({ success: false, message: 'Error fetching substitutes.' });
