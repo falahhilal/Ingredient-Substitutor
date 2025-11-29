@@ -1,168 +1,231 @@
 const db = require('../config/db');
 
-exports.addRecipe = (req, res) => {
-  const { name, description, ingredients, user_email } = req.body;
+//
+// ---------------------------------------------------------
+// ADD RECIPE
+// ---------------------------------------------------------
+//
+exports.addRecipe = async (req, res) => {
+  const { name, description, ingredients, user_email, visibility } = req.body;
 
-  if (!name || !description || ingredients.length === 0) {
+  if (!name || !description || !ingredients || ingredients.length === 0 || !user_email) {
     return res.status(400).json({ message: 'Incomplete recipe data' });
   }
 
-  const sqlInsertRecipe = 'INSERT INTO recipes (name, description, user_email) VALUES (?, ?, ?)';
-  db.query(sqlInsertRecipe, [name, description, user_email], (err, result) => {
-    if (err) {
-      console.error('Error inserting recipe:', err);
-      return res.status(500).json({ message: 'Error saving recipe' });
-    }
+  const sqlInsertRecipe = `
+    INSERT INTO recipes (name, description, user_email, visibility)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.query(sqlInsertRecipe, [name, description, user_email, visibility || 'public'], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Error saving recipe', error: err });
 
     const recipeId = result.insertId;
 
-    // Insert ingredients if they don't exist already
-    const promises = ingredients.map(ing => {
+    const promises = ingredients.map((ing) => {
       return new Promise((resolve, reject) => {
-        // Check if the ingredient already exists
-        const sqlGetIngredientId = `
+        const normalized = {
+          name: ing.name,
+          quantity: parseFloat(ing.quantity) || 1,
+          calories: parseFloat(ing.calories) || 0,
+          fats: parseFloat(ing.fats) || 0,
+          carbs: parseFloat(ing.carbs) || 0,
+          sodium: parseFloat(ing.sodium) || 0,
+          sugar: parseFloat(ing.sugar) || 0,
+          protein: parseFloat(ing.protein) || 0,
+          cost: parseFloat(ing.cost) || 0,
+        };
+
+        const sqlCheck = `
           SELECT ingredient_id FROM ingredients
           WHERE name = ? AND (user_email = ? OR user_email IS NULL)
           LIMIT 1
         `;
-        db.query(sqlGetIngredientId, [ing.name, user_email], (err, results) => {
-          if (err) {
-            reject(err);
-            return;
+
+        db.query(sqlCheck, [normalized.name, user_email], (err, rows) => {
+          if (err) return reject(err);
+
+          if (rows.length > 0) {
+            return resolve({ id: rows[0].ingredient_id, quantity: normalized.quantity });
           }
 
-          let ingredientId = results.length > 0 ? results[0].ingredient_id : null;
+          const sqlInsertIng = `
+            INSERT INTO ingredients 
+            (name, quantity, calories, fats, carbs, sodium, sugar, protein, cost, user_email)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
 
-          if (!ingredientId) {
-            // Ingredient does not exist, so insert a new one
-            const sqlInsertIngredient = `
-              INSERT INTO ingredients (name, quantity, calories, fats, carbs, sodium, sugar, protein, cost, user_email)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-            db.query(sqlInsertIngredient, [
-              ing.name || '', 
-              ing.quantity || 0, 
-              ing.calories || 0, 
-              ing.fats || 0, 
-              ing.carbs || 0,
-              ing.sodium || 0, 
-              ing.sugar || 0, 
-              ing.protein || 0, 
-              ing.cost || 0, 
-              user_email || null
-            ], (err, insertResult) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              ingredientId = insertResult.insertId;
-              resolve({ id: ingredientId, quantity: ing.quantity || 1 });
-            });
-          } else {
-            resolve({ id: ingredientId, quantity: ing.quantity || 1 });
-          }
+          db.query(sqlInsertIng, [
+            normalized.name, normalized.quantity, normalized.calories, normalized.fats, normalized.carbs,
+            normalized.sodium, normalized.sugar, normalized.protein, normalized.cost, user_email
+          ], (err2, result2) => {
+            if (err2) return reject(err2);
+            resolve({ id: result2.insertId, quantity: normalized.quantity });
+          });
         });
       });
     });
 
-    // all ingredients are inserted or found, link them to the recipe
     Promise.all(promises)
-      .then(ingredientIds => {
-        // Link ingredients to recipe
-        const ingredientPromises = ingredientIds.map(({ id, quantity }) => {
+      .then((ingredientIds) => {
+        const insertLinks = ingredientIds.map(({ id, quantity }) => {
           return new Promise((resolve, reject) => {
-            const sqlInsertRecipeIngredient = `
+            db.query(`
               INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity)
               VALUES (?, ?, ?)
-            `;
-            db.query(sqlInsertRecipeIngredient, [recipeId, id, quantity], (err) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve();
-            });
+            `, [recipeId, id, quantity], (err) => err ? reject(err) : resolve());
           });
         });
 
-        Promise.all(ingredientPromises)
-          .then(() => {
-            res.status(201).json({ message: 'Recipe added successfully', recipeId });
-          })
-          .catch(err => {
-            console.error('Error linking ingredients to recipe:', err);
-            res.status(500).json({ message: 'Error linking ingredients to recipe' });
-          });
+        Promise.all(insertLinks)
+          .then(() => res.status(201).json({
+            message: "Recipe added successfully",
+            recipe_id: recipeId
+          }))
+          .catch((err) => res.status(500).json({ message: "Error linking ingredients", error: err }));
       })
-      .catch(err => {
-        console.error('Error handling ingredients:', err);
-        res.status(500).json({ message: 'Error handling ingredients' });
-      });
+      .catch((err) => res.status(500).json({ message: "Ingredient processing failed", error: err }));
   });
 };
 
+//
+// ---------------------------------------------------------
+// GET RECIPES → WITH AVG RATING + RATING COUNT
+// ---------------------------------------------------------
+//
 exports.getRecipes = (req, res) => {
   const userEmail = req.query.user_email;
 
   const sql = `
     SELECT 
-      r.recipe_id, 
-      r.name AS recipe_name, 
-      r.description, 
+      r.recipe_id, r.name AS recipe_name, r.description, r.user_email,
+      r.visibility, r.created_at,
+
       ri.quantity AS ingredient_quantity,
-      i.ingredient_id,
-      i.name AS ingredient_name, 
-      i.cost, 
-      i.calories, 
-      i.sodium, 
-      i.protein, 
-      i.fats, 
-      i.sugar, 
-      i.carbs, 
-      i.allergens
+      i.ingredient_id, i.name AS ingredient_name,
+      i.cost, i.calories, i.sodium, i.protein, i.fats, i.sugar, i.carbs,
+
+      -- AVG + COUNT rating
+      (SELECT AVG(rating) FROM recipe_ratings WHERE recipe_id = r.recipe_id) AS avg_rating,
+      (SELECT COUNT(*) FROM recipe_ratings WHERE recipe_id = r.recipe_id) AS rating_count
+
     FROM recipes r
     LEFT JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
-    LEFT JOIN ingredients i 
-    ON ri.ingredient_id = i.ingredient_id 
-    AND (i.user_email = ? OR i.user_email IS NULL)
-    WHERE r.user_email = ?
+    LEFT JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+    WHERE r.visibility = 'public' OR r.user_email = ?
+    ORDER BY r.created_at DESC
   `;
 
-  db.query(sql, [userEmail, userEmail], (err, results) => {
-    if (err) {
-      console.error('Error fetching recipes:', err);
-      return res.status(500).json({ message: 'Error fetching recipes' });
-    }
+  db.query(sql, [userEmail], (err, results) => {
+    if (err)
+      return res.status(500).json({ message: 'Error fetching recipes', error: err });
 
-    const recipes = results.reduce((acc, row) => {
-      if (!acc[row.recipe_id]) {
-        acc[row.recipe_id] = {
+    const formatted = {};
+
+    results.forEach((row) => {
+      if (!formatted[row.recipe_id]) {
+        formatted[row.recipe_id] = {
           recipe_id: row.recipe_id,
           name: row.recipe_name,
           description: row.description,
+          user_email: row.user_email,
+          visibility: row.visibility,
+          created_at: row.created_at,
+
+          avg_rating: row.avg_rating ? Number(row.avg_rating).toFixed(1) : "0.0",
+          rating_count: row.rating_count || 0,
+
           ingredients: []
         };
       }
 
       if (row.ingredient_id) {
-        acc[row.recipe_id].ingredients.push({
+        formatted[row.recipe_id].ingredients.push({
           ingredient_id: row.ingredient_id,
           name: row.ingredient_name,
-          cost: row.cost,
           quantity: row.ingredient_quantity,
+          cost: row.cost,
           calories: row.calories,
-          sodium: row.sodium,
-          protein: row.protein,
           fats: row.fats,
-          sugar: row.sugar,
           carbs: row.carbs,
-          allergens: row.allergens
+          sodium: row.sodium,
+          sugar: row.sugar,
         });
       }
+    });
 
-      return acc;
-    }, {});
+    res.json(Object.values(formatted));
+  });
+};
 
-    res.json(Object.values(recipes));
+//
+// ---------------------------------------------------------
+// RATE RECIPE
+// ---------------------------------------------------------
+//
+exports.rateRecipe = (req, res) => {
+  const { recipe_id, user_email, rating } = req.body;
+
+  if (!recipe_id || !user_email || !rating)
+    return res.status(400).json({ message: 'Missing data' });
+
+  const sql = `
+    INSERT INTO recipe_ratings (recipe_id, user_email, rating)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE rating = ?
+  `;
+
+  db.query(sql, [recipe_id, user_email, rating, rating], (err) => {
+    if (err)
+      return res.status(500).json({ message: 'Error saving rating', error: err });
+
+    res.json({ message: 'Rating saved successfully' });
+  });
+};
+
+//
+// ---------------------------------------------------------
+// GET AVG RATING FOR A SINGLE RECIPE
+// ---------------------------------------------------------
+//
+exports.getRecipeRatings = (req, res) => {
+  const recipe_id = req.query.recipe_id;
+
+  if (!recipe_id)
+    return res.status(400).json({ message: 'Missing recipe_id' });
+
+  const sql = `
+    SELECT AVG(rating) AS avg_rating, COUNT(*) AS total_ratings
+    FROM recipe_ratings
+    WHERE recipe_id = ?
+  `;
+
+  db.query(sql, [recipe_id], (err, rows) => {
+    if (err)
+      return res.status(500).json({ message: 'Error fetching ratings', error: err });
+
+    res.json(rows[0]);
+  });
+};
+
+//
+// ---------------------------------------------------------
+// SEARCH
+// ---------------------------------------------------------
+//
+exports.searchRecipes = (req, res) => {
+  const { query } = req.query;
+
+  const sql = `
+    SELECT * FROM recipes
+    WHERE visibility = 'public' AND name LIKE ?
+    ORDER BY created_at DESC
+  `;
+
+  db.query(sql, [`%${query}%`], (err, results) => {
+    if (err)
+      return res.status(500).json({ message: 'Error searching recipes', error: err });
+
+    res.json(results);
   });
 };
