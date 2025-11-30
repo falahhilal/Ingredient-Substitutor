@@ -1,10 +1,8 @@
 const db = require('../config/db');
 
-//
-// ---------------------------------------------------------
+
 // ADD RECIPE
-// ---------------------------------------------------------
-//
+
 exports.addRecipe = async (req, res) => {
   const { name, description, ingredients, user_email, visibility } = req.body;
 
@@ -88,11 +86,9 @@ exports.addRecipe = async (req, res) => {
   });
 };
 
-//
-// ---------------------------------------------------------
+
 // GET RECIPES → WITH AVG RATING + RATING COUNT
-// ---------------------------------------------------------
-//
+
 exports.getRecipes = (req, res) => {
   const userEmail = req.query.user_email;
 
@@ -158,11 +154,9 @@ exports.getRecipes = (req, res) => {
   });
 };
 
-//
-// ---------------------------------------------------------
+
 // RATE RECIPE
-// ---------------------------------------------------------
-//
+
 exports.rateRecipe = (req, res) => {
   const { recipe_id, user_email, rating } = req.body;
 
@@ -183,11 +177,9 @@ exports.rateRecipe = (req, res) => {
   });
 };
 
-//
-// ---------------------------------------------------------
+
 // GET AVG RATING FOR A SINGLE RECIPE
-// ---------------------------------------------------------
-//
+
 exports.getRecipeRatings = (req, res) => {
   const recipe_id = req.query.recipe_id;
 
@@ -208,11 +200,8 @@ exports.getRecipeRatings = (req, res) => {
   });
 };
 
-//
-// ---------------------------------------------------------
 // SEARCH
-// ---------------------------------------------------------
-//
+
 exports.searchRecipes = (req, res) => {
   const { query } = req.query;
 
