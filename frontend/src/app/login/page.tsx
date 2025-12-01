@@ -88,9 +88,7 @@ export default function LoginPage() {
       } else {
         setError(data.message || 'Something went wrong');
       }
-        //localStorage.setItem('name', email);   //to be removed
-        //localStorage.setItem('name', email); //to be removed
-        //router.push('/dashboard');            //to be removed
+
     } catch (err) {
       console.error(err);
       setError('An error occurred. Please try again!');
