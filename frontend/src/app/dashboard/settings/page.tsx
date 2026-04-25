@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const user = {
-    email: localStorage.getItem('email'),
-    username: localStorage.getItem('name'),
-  };
 
+  const [user, setUser] = useState({
+    email: '',
+    username: '',
+  });
+  
   const [preferences, setPreferences] = useState<{ type: string; value: string }[]>([]);
   const [showPreferenceOptions, setShowPreferenceOptions] = useState(false);
   const [selectedPreferenceType, setSelectedPreferenceType] = useState<string | null>(null);
@@ -21,6 +22,13 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    const email = localStorage.getItem('email') || '';
+    const username = localStorage.getItem('name') || '';
+
+    setUser({ email, username });
+  }, []);
 
   const nutrientOptions = [
     'High Sodium', 'Low Sodium',
@@ -43,7 +51,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/preferences/preferences?email=${user.email}`);
+        const res = await fetch(`https://altbites.onrender.com/api/preferences/preferences?email=${user.email}`);
         const data = await res.json();
         if (data.preferences) {
           setPreferences(JSON.parse(data.preferences));
@@ -58,7 +66,7 @@ export default function SettingsPage() {
     if (user.email) {
       fetchPreferences();
     }
-  }, []);
+  }, [user.email]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -86,7 +94,7 @@ export default function SettingsPage() {
     setShowPreferenceOptions(false);
 
     try {
-      await fetch('http://localhost:5000/api/preferences/preferences', {
+      await fetch('https://altbites.onrender.com/api/preferences/preferences', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +124,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/preferences/change-password', {
+      const res = await fetch('https://altbites.onrender.com/api/preferences/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

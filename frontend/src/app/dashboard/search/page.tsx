@@ -290,7 +290,7 @@ export default function SearchPage() {
 
     // Send the search query, filters, and email (user preferences) to the backend
     try {
-      const response = await fetch('http://localhost:5000/api/searchIngredient', {
+      const response = await fetch('http://altbites.onrender.com/api/searchIngredient', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

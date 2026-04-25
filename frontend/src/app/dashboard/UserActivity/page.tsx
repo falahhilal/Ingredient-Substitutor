@@ -25,7 +25,7 @@ export default function UserActivityPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/activity/userActivity', {
+      const res = await fetch('http://altbites.onrender.com/api/activity/userActivity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -58,7 +58,7 @@ export default function UserActivityPage() {
     );
 
     try {
-      const res = await fetch('http://localhost:5000/api/activity/rate', {
+      const res = await fetch('http://altbites.onrender.com/api/activity/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, activityId, rating }),
