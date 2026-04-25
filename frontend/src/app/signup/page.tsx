@@ -71,7 +71,7 @@ export default function SignupPage() {
     setError('');
 
     try {
-      const response = await fetch('http://altbites.onrender.com/api/auth/signup', {
+      const response = await fetch('https://altbites.onrender.com/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

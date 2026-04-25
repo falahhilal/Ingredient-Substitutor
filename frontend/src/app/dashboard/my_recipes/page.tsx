@@ -138,7 +138,7 @@ export default function RecipesPage() {
   // Fetch one recipe's rating summary
   const fetchRating = async (recipe_id: number) => {
     try {
-      const res = await fetch(`http://altbites.onrender.com/api/recipes/ratings?recipe_id=${encodeURIComponent(String(recipe_id))}`);
+      const res = await fetch(`https://altbites.onrender.com/api/recipes/ratings?recipe_id=${encodeURIComponent(String(recipe_id))}`);
       const data = await res.json();
       if (res.ok) {
         setRatingsSummary(prev => ({
@@ -155,7 +155,7 @@ export default function RecipesPage() {
   const fetchRecipes = async (email?: string) => {
     try {
       const user = email ?? localStorage.getItem('email') ?? '';
-      const res = await fetch(`http://altbites.onrender.com/api/recipes/list?user_email=${encodeURIComponent(user)}`);
+      const res = await fetch(`https://altbites.onrender.com/api/recipes/list?user_email=${encodeURIComponent(user)}`);
       const data = await res.json();
       setRecipes(data);
 
@@ -222,7 +222,7 @@ export default function RecipesPage() {
     };
 
     try {
-      const response = await fetch('http://altbites.onrender.com/api/recipes/add', {
+      const response = await fetch('https://altbites.onrender.com/api/recipes/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecipe),
@@ -332,7 +332,7 @@ export default function RecipesPage() {
   // Rating for feed
   const handleRate = async (recipe_id: number, value: number) => {
     try {
-      await fetch('http://altbites.onrender.com/api/recipes/rate', {
+      await fetch('https://altbites.onrender.com/api/recipes/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipe_id, user_email: userEmail, rating: value }),

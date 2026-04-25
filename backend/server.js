@@ -23,6 +23,10 @@ app.use('/api/preferences', settingsRoutes);
 app.use('/api', searchRoutes);
 app.use('/api/activity', activityRoutes);
 
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
