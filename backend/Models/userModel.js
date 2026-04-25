@@ -1,21 +1,23 @@
 const db = require('../config/db');
 
-// Check if a user exists with email
-const findUserByEmail = (email, callback) => {
-  const query = 'SELECT * FROM user WHERE email = ?';
-  db.query(query, [email], (err, results) => {
-    if (err) return callback(err, null);
-    return callback(null, results[0]);  // return first user found
-  });
+// Find user by email
+const findUserByEmail = async (email) => {
+  const result = await db.query(
+    'SELECT * FROM users WHERE email = $1',
+    [email]
+  );
+
+  return result.rows[0]; // Postgres way
 };
 
-// Create a new user (for signup)
-const createUser = (email, password, callback) => {
-  const query = 'INSERT INTO user (email, password) VALUES (?, ?)';
-  db.query(query, [email, password], (err, results) => {
-    if (err) return callback(err, null);
-    return callback(null, results);
-  });
+// Create new user
+const createUser = async (email, password) => {
+  const result = await db.query(
+    'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *',
+    [email, password]
+  );
+
+  return result.rows[0];
 };
 
 module.exports = {

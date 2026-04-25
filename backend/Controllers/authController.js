@@ -1,62 +1,83 @@
 const bcrypt = require('bcrypt');
-const db = require('../config/db'); 
+const db = require('../config/db');
 
-exports.signup = (req, res) => {
+// SIGNUP
+exports.signup = async (req, res) => {
   const { name, email, password } = req.body;
 
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      console.error('Error hashing password:', err);
-      return res.status(500).json({ message: 'Internal server error' });
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  try {
+    // check if user already exists
+    const existingUser = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: 'User already exists' });
     }
 
-    const sql = 'INSERT INTO user (name, email, password) VALUES (?, ?, ?)';
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.query(sql, [name, email, hashedPassword], (err, result) => {
-      if (err) {
-        console.error('Error inserting user:', err);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
+    await db.query(
+      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)',
+      [name, email, hashedPassword]
+    );
 
-      res.status(201).json({ message: 'User created successfully', success: true, name: name, email: email,  });
+    res.status(201).json({
+      message: 'User created successfully',
+      success: true,
+      name,
+      email
     });
-  });
+
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 };
 
-exports.login = (req, res) => {
+
+// LOGIN
+exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Please provide both email and password' });
+    return res.status(400).json({
+      message: 'Please provide both email and password'
+    });
   }
 
-  const sql = 'SELECT * FROM user WHERE email = ?';
+  try {
+    const result = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
 
-  db.query(sql, [email], (err, result) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-
-    //no user found with that email
-    if (result.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const user = result[0];
-    // Compare the password with the hashed password 
-    bcrypt.compare(password, result[0].password, (err, isMatch) => {
-      if (err) {
-        console.error('Error comparing passwords:', err);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
+    const user = result.rows[0];
 
-      if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
+    const isMatch = await bcrypt.compare(password, user.password);
 
-      // User authenticated
-      res.status(200).json({ message: 'Login successful', success: true, name: user.name, email: user.email });
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    res.status(200).json({
+      message: 'Login successful',
+      success: true,
+      name: user.name,
+      email: user.email
     });
-  });
+
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 };

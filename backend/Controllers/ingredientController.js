@@ -1,78 +1,69 @@
 const db = require('../config/db');
 
-// Controller to get ingredients
-exports.getIngredients = (req, res) => {
+// GET INGREDIENTS
+exports.getIngredients = async (req, res) => {
   const { user_email } = req.query;
 
-  // Check if the user_email is valid
-  if (user_email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(user_email)) {
-    return res.status(400).json({ message: 'Invalid email format' });
-  }
+  try {
+    let result;
 
-  let sql;
-  let params;
-
-  if (user_email) {
-    sql = `
-      SELECT * FROM ingredients 
-      WHERE user_email = ? OR user_email IS NULL
-    `;
-    params = [user_email];
-  } else {
-    sql = `
-      SELECT * FROM ingredients 
-      WHERE user_email IS NULL
-    `;
-    params = [];
-  }
-
-  db.query(sql, params, (err, results) => {
-    if (err) {
-      console.error('Error fetching ingredients:', err);
-      return res.status(500).json({ message: 'Internal server error' });
+    if (user_email) {
+      // user-specific + global ingredients
+      result = await db.query(
+        `SELECT * FROM ingredients
+         WHERE user_email = $1 OR user_email IS NULL`,
+        [user_email]
+      );
+    } else {
+      // only global ingredients
+      result = await db.query(
+        `SELECT * FROM ingredients
+         WHERE user_email IS NULL`
+      );
     }
 
-    res.status(200).json(results);
-  });
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching ingredients' });
+  }
 };
 
-// Controller to add an ingredient
-exports.addIngredient = (req, res) => {
+
+// ADD INGREDIENT
+exports.addIngredient = async (req, res) => {
   const {
     name, cost, quantity, calories,
     sodium, protein, fats, sugar,
     carbs, allergens, user_email
   } = req.body;
 
-  // Validate the input fields
+  // Basic validation (important for avoiding silent DB errors)
   if (!name || cost == null || quantity == null) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  // Validate user_email 
-  if (user_email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(user_email)) {
-    return res.status(400).json({ message: 'Invalid email format' });
-  }
+  try {
+    const result = await db.query(
+      `INSERT INTO ingredients
+       (name, cost, quantity, calories, sodium, protein, fats, sugar, carbs, allergens, user_email)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING ingredient_id`,
+      [
+        name, cost, quantity, calories,
+        sodium, protein, fats, sugar,
+        carbs, allergens, user_email || null
+      ]
+    );
 
-  // Insert the ingredient into the database
-  const sql = `
-    INSERT INTO ingredients 
-    (name, cost, quantity, calories, sodium, protein, fats, sugar, carbs, allergens, user_email)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  db.query(sql, [
-    name, cost, quantity, calories, sodium,
-    protein, fats, sugar, carbs, allergens, user_email
-  ], (err, result) => {
-    if (err) {
-      console.error('Error adding ingredient:', err);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'Ingredient added successfully',
-      ingredient_id: result.insertId 
+      ingredient_id: result.rows[0].ingredient_id
     });
-  });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error adding ingredient' });
+  }
 };
