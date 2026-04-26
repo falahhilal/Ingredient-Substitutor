@@ -39,35 +39,9 @@ exports.saveUserPreferences = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Get existing preferences
-    const existingResult = await db.query(
-      'SELECT preferences FROM users WHERE email = $1',
-      [email]
-    );
-
-    if (existingResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const existing = existingResult.rows[0].preferences || [];
-
-    // 2️⃣ Merge (replace same type, keep others)
-    const updated = [...existing];
-
-    for (const newPref of preferences) {
-      const index = updated.findIndex(p => p.type === newPref.type);
-
-      if (index !== -1) {
-        updated[index] = newPref; // replace
-      } else {
-        updated.push(newPref); // add
-      }
-    }
-
-    // 3️⃣ Save merged result
     await db.query(
       'UPDATE users SET preferences = $1 WHERE email = $2',
-      [updated, email]
+      [preferences, email]
     );
 
     res.json({ message: 'Preferences saved successfully' });
