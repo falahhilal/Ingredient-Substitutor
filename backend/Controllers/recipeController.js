@@ -2,16 +2,11 @@ const db = require('../config/db');
 
 
 // ADD RECIPE (PostgreSQL CLEAN VERSION)
-
 exports.addRecipe = async (req, res) => {
   const { name, description, ingredients, user_email, visibility } = req.body;
 
-  const client = await db.connect();
-
   try {
-    await client.query('BEGIN');
-
-    const recipeResult = await client.query(
+    const recipeResult = await db.query(
       `INSERT INTO recipes (name, description, user_email, visibility)
        VALUES ($1, $2, $3, $4)
        RETURNING recipe_id`,
@@ -23,7 +18,7 @@ exports.addRecipe = async (req, res) => {
     for (const ing of ingredients) {
       let ingredientId;
 
-      const check = await client.query(
+      const check = await db.query(
         `SELECT ingredient_id FROM ingredients WHERE name = $1 LIMIT 1`,
         [ing.name]
       );
@@ -31,7 +26,7 @@ exports.addRecipe = async (req, res) => {
       if (check.rows.length > 0) {
         ingredientId = check.rows[0].ingredient_id;
       } else {
-        const inserted = await client.query(
+        const inserted = await db.query(
           `INSERT INTO ingredients
            (name, quantity, calories, fats, carbs, sodium, sugar, protein, cost, user_email)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
@@ -53,26 +48,20 @@ exports.addRecipe = async (req, res) => {
         ingredientId = inserted.rows[0].ingredient_id;
       }
 
-      await client.query(
+      await db.query(
         `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity)
          VALUES ($1, $2, $3)`,
         [recipeId, ingredientId, ing.quantity || 1]
       );
     }
 
-    await client.query('COMMIT');
-
     res.json({ success: true, recipe_id: recipeId });
 
   } catch (err) {
-    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Failed to add recipe' });
-  } finally {
-    client.release();
   }
 };
-
 
 
 // GET RECIPES

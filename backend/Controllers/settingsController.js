@@ -17,10 +17,10 @@ exports.getUserPreferences = async (req, res) => {
     if (result.rows.length === 0)
       return res.status(404).json({ error: 'User not found' });
 
-    const raw = result.rows[0].preferences;
-    const parsed = raw ? JSON.parse(raw) : [];
+    // ✅ NO JSON.parse
+    const preferences = result.rows[0].preferences || [];
 
-    res.json(parsed);
+    res.json(preferences);
 
   } catch (err) {
     console.error(err);
@@ -41,7 +41,7 @@ exports.saveUserPreferences = async (req, res) => {
   try {
     const result = await db.query(
       'UPDATE users SET preferences = $1 WHERE email = $2',
-      [JSON.stringify(preferences), email]
+      [preferences, email] // ✅ NO stringify needed for PG JSON
     );
 
     if (result.rowCount === 0)
@@ -55,7 +55,7 @@ exports.saveUserPreferences = async (req, res) => {
   }
 };
 
-// CHANGE PASSWORD
+// CHANGE PASSWORD (already correct)
 exports.changePassword = async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
 
