@@ -36,14 +36,14 @@ exports.searchIngredient = async (req, res) => {
     const userId = userResult.rows[0].user_id;
 
     let preferences = [];
+
     if (userResult.rows[0].preferences) {
-      try {
+      if (typeof userResult.rows[0].preferences === "string") {
+        // fallback (if stored as text)
         preferences = JSON.parse(userResult.rows[0].preferences);
-      } catch {
-        return res.status(500).json({
-          success: false,
-          message: 'Invalid preferences format.'
-        });
+      } else {
+        // correct Postgres JSON behavior
+        preferences = userResult.rows[0].preferences;
       }
     }
 
