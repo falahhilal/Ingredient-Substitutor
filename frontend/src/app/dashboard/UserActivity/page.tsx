@@ -37,6 +37,7 @@ export default function UserActivityPage() {
         setActivities([]);
       } else {
         setActivities(data.results || []);
+        setError(null);
       }
     } catch (err) {
       console.error('Fetch error:', err);

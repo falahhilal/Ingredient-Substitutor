@@ -52,7 +52,7 @@ export default function SettingsPage() {
     const fetchPreferences = async () => {
       try {
         const res = await fetch(
-          `https://altbites.onrender.com/api/preferences/preferences?email=${user.email}`
+          `https://altbites.onrender.com/api/preferences?email=${user.email}`
         );
 
         const data = await res.json();
@@ -94,7 +94,7 @@ export default function SettingsPage() {
     setShowPreferenceOptions(false);
 
     try {
-      await fetch('https://altbites.onrender.com/api/preferences/preferences', {
+      await fetch('https://altbites.onrender.com/api/preferences', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export default function SettingsPage() {
     setPreferences(updatedPreferences);
     try {
       await fetch(
-        'https://altbites.onrender.com/api/preferences/preferences',
+        'https://altbites.onrender.com/api/preferences',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
