@@ -50,7 +50,7 @@ exports.saveUserPreferences = async (req, res) => {
   try {
     await db.query(
       'UPDATE users SET preferences = $1 WHERE email = $2',
-      [preferences, email]
+      [JSON.stringify(preferences), email]
     );
 
     res.json({ message: 'Preferences saved successfully' });

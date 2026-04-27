@@ -51,21 +51,21 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
-        const res = await fetch(`https://altbites.onrender.com/api/preferences/preferences?email=${user.email}`);
+        const res = await fetch(
+          `https://altbites.onrender.com/api/preferences/preferences?email=${user.email}`
+        );
+
         const data = await res.json();
-        if (data.preferences) {
-          setPreferences(JSON.parse(data.preferences));
-        } else {
-          setPreferences(data); // fallback
-        }
+        
+        setPreferences(Array.isArray(data) ? data : []);
+
       } catch (err) {
         console.error('Error fetching preferences:', err);
+        setPreferences([]);
       }
     };
 
-    if (user.email) {
-      fetchPreferences();
-    }
+    if (user.email) fetchPreferences();
   }, [user.email]);
 
   const handleLogout = () => {
@@ -109,9 +109,24 @@ export default function SettingsPage() {
     }
   };
 
-  const handleRemovePreference = (index: number) => {
+  const handleRemovePreference = async (index: number) => {
     const updatedPreferences = preferences.filter((_, i) => i !== index);
     setPreferences(updatedPreferences);
+    try {
+      await fetch(
+        'https://altbites.onrender.com/api/preferences/preferences',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            preferences: updatedPreferences,
+          }),
+        }
+      );
+    } catch (err) {
+      console.error('Error updating preferences:', err);
+    }
   };
 
   const handleChangePassword = async () => {
