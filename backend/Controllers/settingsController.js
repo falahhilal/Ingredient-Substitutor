@@ -17,10 +17,11 @@ exports.getUserPreferences = async (req, res) => {
     if (result.rows.length === 0)
       return res.status(404).json({ error: 'User not found' });
 
-    // ✅ NO JSON.parse
     let preferences = result.rows[0].preferences;
 
+    // 🔥 handle ALL cases safely
     if (!preferences) preferences = [];
+
     if (typeof preferences === 'string') {
       try {
         preferences = JSON.parse(preferences);

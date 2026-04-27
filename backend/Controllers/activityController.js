@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 // ✅ GET USER ACTIVITY
 exports.getUserActivity = async (req, res) => {
-  const { email } = req.body;
+  const email = req.body.email || req.query.email;
 
   if (!email) {
     return res.status(400).json({
